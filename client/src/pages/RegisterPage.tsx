@@ -38,8 +38,8 @@ const RegisterPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(user));
       navigate('/lobby');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || '注册失败，请稍后重试');
+      const errorMsg = err instanceof Error ? err.message : '注册失败，请稍后重试';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

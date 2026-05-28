@@ -26,8 +26,8 @@ const LoginPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(user));
       navigate('/lobby');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || '登录失败，请检查用户名和密码');
+      const errorMsg = err instanceof Error ? err.message : '登录失败，请检查用户名和密码';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

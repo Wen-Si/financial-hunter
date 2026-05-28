@@ -55,8 +55,8 @@ const LobbyPage: React.FC = () => {
       const res = await avatarAPI.getAll();
       setAvatars(res.data.avatars);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || '获取角色列表失败');
+      const errorMsg = err instanceof Error ? err.message : '获取角色列表失败';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -75,8 +75,8 @@ const LobbyPage: React.FC = () => {
       await avatarAPI.delete(id);
       setAvatars((prev) => prev.filter((a) => a.id !== id));
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      alert(error.response?.data?.message || '删除失败');
+      const errorMsg = err instanceof Error ? err.message : '删除失败';
+      alert(errorMsg);
     } finally {
       setDeletingId(null);
     }

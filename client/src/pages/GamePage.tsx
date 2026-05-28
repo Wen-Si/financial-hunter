@@ -48,7 +48,7 @@ const GamePage: React.FC = () => {
   const [gameOverReason, setGameOverReason] = useState('');
   const [stepCount, setStepCount] = useState(0);
 
-  const autoRunRef = useRef<NodeJS.Timeout | null>(null);
+  const autoRunRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 初始化游戏
   const initGame = useCallback(async () => {
@@ -94,8 +94,8 @@ const GamePage: React.FC = () => {
           : null
       );
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || '初始化游戏失败');
+      const errorMsg = err instanceof Error ? err.message : '初始化游戏失败';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -165,8 +165,8 @@ const GamePage: React.FC = () => {
         setIsAutoRun(false);
       }
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || '执行行动失败');
+      const errorMsg = err instanceof Error ? err.message : '执行行动失败';
+      setError(errorMsg);
       setIsAutoRun(false);
     } finally {
       setActionLoading(false);

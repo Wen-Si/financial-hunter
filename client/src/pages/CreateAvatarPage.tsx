@@ -52,8 +52,8 @@ const CreateAvatarPage: React.FC = () => {
       await avatarAPI.create(name.trim(), characterDescription.trim());
       navigate('/lobby');
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      setError(error.response?.data?.message || '创建角色失败，请稍后重试');
+      const errorMsg = err instanceof Error ? err.message : '创建角色失败，请稍后重试';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from './services/api';
+import * as localService from './services/localStorage';
 import { User } from './types';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -28,6 +29,7 @@ const NavBar: React.FC = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
+    localService.logout();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
