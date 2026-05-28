@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from './services/api';
 import * as localService from './services/localStorage';
 import { User } from './types';
@@ -104,7 +104,7 @@ const NavBar: React.FC = () => {
 // 主应用组件
 const App: React.FC = () => {
   return (
-    <BrowserRouter basename="/financial-hunter">
+    <HashRouter>
       <div className="min-h-screen bg-dark-950 bg-pattern">
         <NavBar />
         <main className="pt-16">
@@ -118,7 +118,7 @@ const App: React.FC = () => {
           </Routes>
         </main>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
