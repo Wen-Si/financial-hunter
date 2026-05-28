@@ -173,9 +173,17 @@ const LobbyPage: React.FC = () => {
                 <div className="p-5 border-b border-dark-700/50">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-dark-950 font-bold text-lg">
-                        {avatar.name.charAt(0)}
-                      </div>
+                      {avatar.avatarUrl ? (
+                        <img
+                          src={avatar.avatarUrl}
+                          alt={avatar.name}
+                          className="w-12 h-12 rounded-xl object-cover border-2 border-yellow-400/30"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-dark-950 font-bold text-lg">
+                          {avatar.name.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <h3 className="text-lg font-semibold text-white">{avatar.name}</h3>
                         <p className="text-xs text-dark-400">{avatar.career.当前职位}</p>

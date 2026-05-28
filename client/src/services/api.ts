@@ -97,7 +97,8 @@ function applyChanges(
   const result = { ...base };
   for (const [key, value] of Object.entries(changes)) {
     if (value !== undefined && key in result) {
-      result[key] = Math.max(0, Math.min(100, result[key] + value));
+      // 属性不设置上限，但最大不超过1000
+      result[key] = Math.max(0, Math.min(1000, result[key] + value));
     }
   }
   return result;

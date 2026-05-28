@@ -51,6 +51,7 @@ export interface Avatar {
   userId: string;
   name: string;
   characterDescription: string;
+  avatarUrl?: string; // 随机生成的头像URL
   attributes: AvatarAttributes;
   career: Career;
   status: Status;

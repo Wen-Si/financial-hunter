@@ -1,4 +1,5 @@
 import { User, Avatar, AvatarAttributes, Career, Status, GameEvent } from '../types';
+import { generateAvatar } from './imageService';
 
 // ==========================================
 // localStorage keys
@@ -139,6 +140,7 @@ export function logout(): void {
 // ==========================================
 interface StoredAvatar extends Avatar {
   userId: string;
+  avatarUrl?: string; // 随机生成的头像URL
 }
 
 export function getAllAvatars(): StoredAvatar[] {
@@ -196,6 +198,7 @@ export async function createAvatar(
         status: defaultStatus,
         currentScenario: null,
         gameLog: [],
+        avatarUrl: generateAvatar(`${userId}-${name}-${Date.now()}`),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

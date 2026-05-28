@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { gameAPI, avatarAPI } from '../services/api';
+import { getSceneImage, getEmotionImage, getResultImage } from '../services/imageService';
 import {
   Avatar,
   AvatarAttributes,
@@ -47,6 +48,10 @@ const GamePage: React.FC = () => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [gameOverReason, setGameOverReason] = useState('');
   const [stepCount, setStepCount] = useState(0);
+  
+  // 图片状态
+  const [sceneImage, setSceneImage] = useState<string>('');
+  const [resultImage, setResultImage] = useState<string>('');
 
   const autoRunRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -143,6 +148,13 @@ const GamePage: React.FC = () => {
       setCurrentScenario(data.nextScenario);
       setGameLog((prev) => [...prev, data.gameEvent]);
       setStepCount((prev) => prev + 1);
+      
+      // 更新图片
+      if (data.nextScenario) {
+        setSceneImage(getSceneImage(data.nextScenario.category));
+      }
+      // 根据结果描述的情绪选择图片
+      setResultImage(getEmotionImage(data.outcome.description));
 
       // 更新角色属性和状态
       setAvatar((prev) =>
@@ -291,9 +303,17 @@ const GamePage: React.FC = () => {
             {/* 角色信息卡片 */}
             <div className="glass rounded-xl p-5">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-dark-950 font-bold text-lg">
-                  {avatar?.name.charAt(0) || '?'}
-                </div>
+                {avatar?.avatarUrl ? (
+                  <img
+                    src={avatar.avatarUrl}
+                    alt={avatar?.name || '角色'}
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-yellow-400/30"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center text-dark-950 font-bold text-lg">
+                    {avatar?.name.charAt(0) || '?'}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-lg font-bold text-white">{avatar?.name || '未知角色'}</h2>
                   <p className="text-xs text-dark-400">{avatar?.career.当前职位} | {avatar?.career.所属机构}</p>
@@ -393,50 +413,65 @@ const GamePage: React.FC = () => {
           <div className="lg:col-span-8 space-y-4">
             {/* 当前场景 */}
             {currentScenario && (
-              <div className="glass rounded-xl p-6 animate-slide-in">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                      {currentScenario.category}
-                    </span>
-                    <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-dark-700 text-dark-300">
-                      难度 {currentScenario.difficulty}/5
-                    </span>
-                    <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-dark-700 text-dark-300">
-                      第 {stepCount + 1} 步
-                    </span>
+              <div className="glass rounded-xl overflow-hidden animate-slide-in">
+                {/* 场景图片 */}
+                <div className="relative h-48 bg-dark-800">
+                  <img
+                    src={sceneImage || getSceneImage(currentScenario.category)}
+                    alt={currentScenario.title}
+                    className="w-full h-full object-cover opacity-80"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/50 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                        {currentScenario.category}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-dark-700/80 text-dark-300">
+                        难度 {currentScenario.difficulty}/5
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-dark-700/80 text-dark-300">
+                        第 {stepCount + 1} 步
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white">{currentScenario.title}</h2>
                   </div>
                 </div>
+                
+                {/* 场景内容 */}
+                <div className="p-6">
+                  <p className="text-dark-300 leading-relaxed mb-4">{currentScenario.description}</p>
 
-                <h2 className="text-xl font-bold text-white mb-3">{currentScenario.title}</h2>
-                <p className="text-dark-300 leading-relaxed mb-4">{currentScenario.description}</p>
-
-                {currentScenario.context && (
-                  <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700/50">
-                    <h4 className="text-xs font-medium text-dark-400 uppercase tracking-wider mb-2">背景信息</h4>
-                    <p className="text-sm text-dark-300 leading-relaxed">{currentScenario.context}</p>
-                  </div>
-                )}
-
-                {/* 可选选项 */}
-                {currentScenario.choices && currentScenario.choices.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-xs font-medium text-dark-400 uppercase tracking-wider mb-2">可选方案</h4>
-                    <div className="space-y-2">
-                      {currentScenario.choices.map((choice) => (
-                        <div
-                          key={choice.id}
-                          className="flex items-center space-x-2 text-sm text-dark-300 bg-dark-800/30 rounded-lg px-3 py-2 border border-dark-700/30"
-                        >
-                          <span className="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center text-xs text-dark-400 flex-shrink-0">
-                            {choice.id}
-                          </span>
-                          <span>{choice.text}</span>
-                        </div>
-                      ))}
+                  {currentScenario.context && (
+                    <div className="bg-dark-800/50 rounded-lg p-4 border border-dark-700/50">
+                      <h4 className="text-xs font-medium text-dark-400 uppercase tracking-wider mb-2">背景信息</h4>
+                      <p className="text-sm text-dark-300 leading-relaxed">{currentScenario.context}</p>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {/* 可选选项 */}
+                  {currentScenario.choices && currentScenario.choices.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-xs font-medium text-dark-400 uppercase tracking-wider mb-2">可选方案</h4>
+                      <div className="space-y-2">
+                        {currentScenario.choices.map((choice) => (
+                          <div
+                            key={choice.id}
+                            className="flex items-center space-x-2 text-sm text-dark-300 bg-dark-800/30 rounded-lg px-3 py-2 border border-dark-700/30"
+                          >
+                            <span className="w-5 h-5 rounded-full bg-dark-700 flex items-center justify-center text-xs text-dark-400 flex-shrink-0">
+                              {choice.id}
+                            </span>
+                            <span>{choice.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -480,41 +515,54 @@ const GamePage: React.FC = () => {
                 </div>
 
                 {/* 行动结果 */}
-                <div className="glass rounded-xl p-6 border-l-4 border-l-emerald-500">
-                  <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center">
-                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    行动结果
-                  </h3>
-                  <p className="text-dark-200 leading-relaxed">{lastAction.outcome.description}</p>
+                <div className="glass rounded-xl overflow-hidden border-l-4 border-l-emerald-500">
+                  {/* 结果图片 */}
+                  {resultImage && (
+                    <div className="relative h-32 bg-dark-800">
+                      <img
+                        src={resultImage}
+                        alt="行动结果"
+                        className="w-full h-full object-cover opacity-70"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-dark-950/80 to-transparent" />
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center">
+                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      行动结果
+                    </h3>
+                    <p className="text-dark-200 leading-relaxed">{lastAction.outcome.description}</p>
 
-                  {/* 属性变化汇总 */}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {Object.entries(lastAction.outcome.attributesChange).map(([key, val]) => (
-                      <span
-                        key={key}
-                        className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                          val > 0
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        }`}
-                      >
-                        {key} {val > 0 ? `+${val}` : val}
-                      </span>
-                    ))}
-                    {Object.entries(lastAction.outcome.statusChange).map(([key, val]) => (
-                      <span
-                        key={key}
-                        className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                          val > 0
-                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        }`}
-                      >
-                        {key} {val > 0 ? `+${val}` : val}
-                      </span>
-                    ))}
+                    {/* 属性变化汇总 */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {Object.entries(lastAction.outcome.attributesChange).map(([key, val]) => (
+                        <span
+                          key={key}
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                            val > 0
+                              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          }`}
+                        >
+                          {key} {val > 0 ? `+${val}` : val}
+                        </span>
+                      ))}
+                      {Object.entries(lastAction.outcome.statusChange).map(([key, val]) => (
+                        <span
+                          key={key}
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                            val > 0
+                              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          }`}
+                        >
+                          {key} {val > 0 ? `+${val}` : val}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

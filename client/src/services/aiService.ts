@@ -86,10 +86,10 @@ export async function parseCharacterDescription(
       const jsonMatch = aiResult.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        // Validate and clamp values
+        // Validate values - no upper limit but max 1000
         const attrKeys: (keyof AvatarAttributes)[] = ['品格', '情商', '专业知识', '人脉', '抗压能力', '运气'];
         for (const key of attrKeys) {
-          if (typeof parsed.attributes?.[key] !== 'number' || parsed.attributes[key] < 1 || parsed.attributes[key] > 100) {
+          if (typeof parsed.attributes?.[key] !== 'number' || parsed.attributes[key] < 1 || parsed.attributes[key] > 1000) {
             parsed.attributes[key] = 50;
           }
         }
