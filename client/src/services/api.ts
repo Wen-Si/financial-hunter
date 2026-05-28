@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginResponse, User, Avatar, GameActionResponse, GameStartResponse, Scenario } from '../types';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.PROD ? '/api' : 'http://localhost:3000/api';
 
 // 创建axios实例
 const api = axios.create({

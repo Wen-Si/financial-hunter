@@ -34,13 +34,73 @@
 
 ## 快速开始
 
-### 1. 克隆仓库
+### 方式一：Docker 部署 (推荐)
+
+#### 前置要求
+- Docker 20.10+
+- Docker Compose 2.0+
+
+#### 部署步骤
+
+1. 克隆仓库
 ```bash
 git clone https://github.com/YOUR_USERNAME/financial-hunter.git
 cd financial-hunter
 ```
 
-### 2. 安装依赖
+2. 配置环境变量
+
+编辑 `docker-compose.yml` 文件，修改以下配置：
+```yaml
+services:
+  server:
+    environment:
+      - JWT_SECRET=your_jwt_secret_key_here
+      - GLM_API_KEY=your_glm_api_key_here  # 替换为你的智谱AI API Key
+```
+
+3. 启动服务
+```bash
+docker-compose up -d
+```
+
+4. 访问游戏
+
+- 前端: http://localhost:8080
+- 后端 API: http://localhost:3000
+
+5. 查看日志
+```bash
+docker-compose logs -f
+```
+
+6. 停止服务
+```bash
+docker-compose down
+```
+
+7. 重新构建（当代码有更新时）
+```bash
+docker-compose up -d --build
+```
+
+---
+
+### 方式二：手动部署
+
+#### 前置要求
+- Node.js 18+
+- npm 9+
+
+#### 部署步骤
+
+1. 克隆仓库
+```bash
+git clone https://github.com/YOUR_USERNAME/financial-hunter.git
+cd financial-hunter
+```
+
+2. 安装依赖
 
 **后端**
 ```bash
@@ -54,7 +114,7 @@ cd client
 npm install
 ```
 
-### 3. 配置环境变量
+3. 配置环境变量
 
 在 `server/` 目录下创建 `.env` 文件：
 ```env
@@ -63,20 +123,136 @@ JWT_SECRET=your_jwt_secret_key_here
 GLM_API_KEY=your_glm_api_key_here
 ```
 
-### 4. 启动后端
+4. 启动后端
 ```bash
 cd server
 npm run dev
 ```
 
-### 5. 启动前端
+5. 启动前端（在另一个终端）
 ```bash
 cd client
 npm run dev
 ```
 
-### 6. 访问游戏
-打开浏览器访问 `http://localhost:5173`
+6. 访问游戏
+
+打开浏览器访问 http://localhost:5173
+
+---
+
+## 如何获取 API Key
+
+### 智谱AI GLM API Key
+
+1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
+2. 注册/登录账号
+3. 进入控制台 -> API Keys -> 创建新密钥
+4. 复制生成的 API Key
+5. 将 API Key 填入环境变量 `GLM_API_KEY`
+
+**注意**: 请妥善保管你的 API Key，不要泄露给他人或提交到代码仓库。
+
+---
+
+## 常见问题解答 (FAQ)
+
+### Q1: Docker 部署时端口被占用怎么办？
+
+**A**: 修改 `docker-compose.yml` 中的端口映射：
+
+```yaml
+services:
+  server:
+    ports:
+      - "3001:3000"  # 使用 3001 端口
+  client:
+    ports:
+      - "8081:80"    # 使用 8081 端口
+```
+
+### Q2: 如何查看容器日志？
+
+**A**: 使用以下命令查看日志：
+
+```bash
+# 查看所有服务日志
+docker-compose logs -f
+
+# 只看后端日志
+docker-compose logs -f server
+
+# 只看前端日志
+docker-compose logs -f client
+```
+
+### Q3: 如何重置数据库？
+
+**A**: 停止服务后，删除数据库文件并重新启动：
+
+```bash
+docker-compose down
+rm -rf database/
+docker-compose up -d
+```
+
+### Q4: 前端开发模式下 API 请求跨域错误？
+
+**A**: 这是正常的。开发模式下 (npm run dev) 使用的是绝对路径 `http://localhost:3000/api`，生产环境使用 Nginx 反向代理 `/api`。开发完成后执行 `npm run build` 即可。
+
+### Q5: GLM API 调用失败怎么办？
+
+**A**: 检查以下几点：
+1. API Key 是否正确配置
+2. API Key 是否有效（是否欠费/过期）
+3. 网络是否能访问智谱AI服务器
+4. 查看后端日志确认具体错误信息
+
+### Q6: 如何修改 JWT Secret？
+
+**A**: 修改 `docker-compose.yml` 或 `.env` 文件中的 `JWT_SECRET` 值。建议使用足够长的随机字符串：
+
+```bash
+# 生成随机密钥
+openssl rand -base64 32
+```
+
+### Q7: 如何自定义游戏场景？
+
+**A**: 编辑 `server/src/scenarios/index.ts` 文件，可以添加新的游戏场景、修改场景权重等。
+
+### Q8: 前端构建失败？
+
+**A**: 尝试清理缓存后重新构建：
+
+```bash
+cd client
+rm -rf node_modules dist
+npm install
+npm run build
+```
+
+### Q9: 容器启动后前端无法访问？
+
+**A**: 检查以下几点：
+1. Nginx 容器是否正常运行: `docker-compose ps`
+2. 端口是否正确映射
+3. 查看 Nginx 日志: `docker-compose logs client`
+4. 确认浏览器访问的是正确的端口
+
+### Q10: 如何备份数据？
+
+**A**: 数据库文件位于 `database/` 目录，定期备份该目录：
+
+```bash
+# 备份
+cp -r database/ database-backup-$(date +%Y%m%d)/
+
+# 恢复
+cp -r database-backup-YYYYMMDD/* database/
+```
+
+---
 
 ## 目录结构
 
@@ -96,6 +272,8 @@ financial-hunter/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── vite.config.ts
+│   ├── nginx.conf          # Nginx配置文件
+│   ├── Dockerfile          # 前端Docker镜像
 │   └── tailwind.config.js
 ├── server/                 # Node.js后端
 │   ├── src/
@@ -108,7 +286,10 @@ financial-hunter/
 │   │   └── index.ts
 │   ├── package.json
 │   ├── tsconfig.json
+│   ├── Dockerfile          # 后端Docker镜像
 │   └── .env
+├── database/               # 数据库文件目录（自动创建）
+├── docker-compose.yml       # Docker Compose配置
 ├── SPEC.md                  # 项目规范
 └── README.md
 ```
@@ -177,20 +358,43 @@ IPO承销、并购交易、尽职调查、客户关系、高压项目等
 
 ## 部署
 
-### 前端部署到GitHub Pages
+### Docker 部署（生产环境推荐）
+
+使用 Docker Compose 一键部署：
+
+```bash
+docker-compose up -d
+```
+
+详细说明请参见上方「方式一：Docker 部署」部分。
+
+### 前端部署
+
+#### GitHub Pages
 
 1. 在GitHub创建仓库
-2. 修改 `client/vite.config.ts` 中的base路径
-3. 运行 `npm run build`
-4. 部署 `dist` 目录到GitHub Pages
+2. 运行 `npm run build`
+3. 部署 `dist` 目录到GitHub Pages
+
+#### VPS/Nginx
+
+使用 Docker 部署或直接构建：
+
+```bash
+cd client
+npm run build
+# 将 dist 目录部署到 Nginx
+```
 
 ### 后端部署
 
-推荐部署到：
-- Railway
-- Render
-- Heroku
-- Vercel
+推荐部署方式：
+- **Railway**: 支持 Docker，部署简单
+- **Render**: 免费额度，支持 Node.js
+- **Heroku**: 老牌 PaaS 平台
+- **Docker + VPS**: 完全自托管
+
+---
 
 ## License
 
