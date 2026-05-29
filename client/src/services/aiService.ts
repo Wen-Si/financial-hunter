@@ -1,4 +1,4 @@
-import { Avatar, AvatarAttributes, Career, Status, Scenario, Choice, GameEvent } from '../types';
+import { Avatar, AvatarAttributes, Career, Status, Scenario, Choice, GameEvent, CharacterPair } from '../types';
 
 const GLM_API_KEY = '7b8a15f57d2941a69fcce60f49f7c6ff.SiMrZjCdyOmdtzLr';
 const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
@@ -340,6 +340,117 @@ function randomFallback(avatar: Avatar, scenario: Scenario): {
     action: `${avatar.name}决定：${selectedChoice.text}`,
     reasoning,
     selectedChoice,
+  };
+}
+
+// ==========================================
+// Generate cooperative action for character pair
+// ==========================================
+export async function generateCooperativeAction(
+  pair: CharacterPair,
+  scenario: Scenario,
+  history: GameEvent[]
+): Promise<{
+  action: string;
+  reasoning: string;
+  selectedChoice?: Choice;
+}> {
+  const systemPrompt = `你是金融职场模拟游戏的AI决策引擎。两个搭档需要协同合作来应对挑战。
+
+男性角色：
+- 姓名：${pair.male.name}
+- 属性：品格${pair.male.attributes.品格}、情商${pair.male.attributes.情商}、专业知识${pair.male.attributes.专业知识}、人脉${pair.male.attributes.人脉}、抗压能力${pair.male.attributes.抗压能力}
+- 性格：${pair.male.characterDescription}
+
+女性角色：
+- 姓名：${pair.female.name}
+- 属性：品格${pair.female.attributes.品格}、情商${pair.female.attributes.情商}、专业知识${pair.female.attributes.专业知识}、人脉${pair.female.attributes.人脉}、抗压能力${pair.female.attributes.抗压能力}
+- 性格：${pair.female.characterDescription}
+
+关系状态：
+- 和谐度：${pair.relationship.harmony}/100
+- 信任度：${pair.relationship.trust}/100
+- 冲突次数：${pair.relationship.conflicts}
+- 欢乐时刻：${pair.relationship.joyfulMoments}
+
+当前整体情绪：${pair.currentEmotion === 'joy' ? '欢乐' : pair.currentEmotion === 'conflict' ? '冲突' : pair.currentEmotion === 'sadness' ? '悲伤' : pair.currentEmotion === 'tension' ? '紧张' : '平静'}
+
+请按照以下JSON格式返回决策结果：
+{
+  "selectedChoiceId": "<选择的选项ID>",
+  "action": "<描述两人如何协同合作，80-150字>",
+  "reasoning": "<分析两人的决策过程和合作方式，80-150字>"
+}
+
+决策原则：
+1. 两个角色应该协同合作，发挥各自优势
+2. 考虑两人当前的和谐度和信任度
+3. 发挥男性角色的优势（通常是专业知识或抗压能力）
+4. 发挥女性角色的优势（通常是情商或人脉）
+5. 决策应该体现两人的互补性`;
+
+  const recentHistory = history.slice(-5).map(
+    (h) => `[${h.scenarioTitle}] ${h.result}`
+  ).join('\n');
+
+  const userPrompt = `当前场景：
+【${scenario.title}】（${scenario.category}，难度${scenario.difficulty}/5）
+${scenario.description}
+
+背景信息：
+${scenario.context}
+
+可选方案：
+${scenario.choices.map((c) => `${c.id}: ${c.text}`).join('\n')}
+
+${recentHistory ? `最近经历：\n${recentHistory}` : ''}
+
+请为${pair.male.name}和${pair.female.name}这对搭档做出协同决策。`;
+
+  try {
+    const aiResult = await callGLM([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ]);
+
+    if (aiResult) {
+      const jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        // Find the selected choice
+        const selectedChoice = scenario.choices.find(
+          (c) => c.id === parsed.selectedChoiceId
+        );
+
+        return {
+          action: parsed.action || `${pair.male.name}和${pair.female.name}选择了方案`,
+          reasoning: parsed.reasoning || '两人基于各自优势做出协同决策',
+          selectedChoice: selectedChoice || scenario.choices[0],
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse cooperative AI action:', e);
+  }
+
+  // Fallback: 两个角色各自加权随机选择，取平均
+  const maleChoice = randomFallback(pair.male, scenario);
+  const femaleChoice = randomFallback(pair.female, scenario);
+
+  // 如果两人选择不同，综合描述
+  if (maleChoice.selectedChoice.id !== femaleChoice.selectedChoice.id) {
+    return {
+      action: `${pair.male.name}与${pair.female.name}经过讨论，决定综合两人的建议：${maleChoice.selectedChoice.text}`,
+      reasoning: `${pair.male.name}凭借专业能力做出判断，${pair.female.name}从人际角度提出补充，两人协商后达成一致。`,
+      selectedChoice: maleChoice.selectedChoice,
+    };
+  }
+
+  return {
+    action: `${pair.male.name}和${pair.female.name}一致认为：${maleChoice.selectedChoice.text}`,
+    reasoning: `两人基于相互信任，选择了共同认可的方案。`,
+    selectedChoice: maleChoice.selectedChoice,
   };
 }
 

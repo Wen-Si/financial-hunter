@@ -1,4 +1,4 @@
-import { User, Avatar, AvatarAttributes, Career, Status, GameEvent } from '../types';
+import { User, Avatar, AvatarAttributes, Career, Status, GameEvent, Gender, CharacterPair, EmotionType } from '../types';
 import { generateAvatar } from './imageService';
 
 // ==========================================
@@ -7,7 +7,9 @@ import { generateAvatar } from './imageService';
 const USERS_KEY = 'fh_users';
 const CURRENT_USER_KEY = 'fh_current_user';
 const AVATARS_KEY = 'fh_avatars';
+const CHARACTER_PAIR_KEY = 'fh_character_pair';
 const GAME_HISTORY_KEY = 'fh_game_history';
+const RELATIONSHIP_KEY = 'fh_relationship';
 
 // ==========================================
 // Helper functions
@@ -63,6 +65,7 @@ export async function registerUser(
         email,
         created_at: new Date().toISOString(),
         last_login_at: new Date().toISOString(),
+        hasCreatedCharacters: false, // 默认未创建角色
       };
 
       users.push(newUser);
@@ -135,12 +138,17 @@ export function logout(): void {
   localStorage.removeItem('fh_token');
 }
 
+// 检查用户是否已创建角色对
+export function hasCharacterPair(userId: string): boolean {
+  const user = getUsers().find(u => u.id === userId);
+  return user?.hasCreatedCharacters || false;
+}
+
 // ==========================================
-// Avatar related
+// Avatar related - 保留单角色接口但标记为deprecated
 // ==========================================
 interface StoredAvatar extends Avatar {
   userId: string;
-  avatarUrl?: string; // 随机生成的头像URL
 }
 
 export function getAllAvatars(): StoredAvatar[] {
@@ -156,89 +164,110 @@ export function getAvatar(avatarId: string): StoredAvatar | null {
   return avatars.find((a) => a.id === avatarId) || null;
 }
 
-export async function createAvatar(
+// ==========================================
+// Character Pair - 双角色系统
+// ==========================================
+export function createCharacterPair(
   userId: string,
-  name: string,
-  characterDescription: string,
-  attributes?: AvatarAttributes,
-  career?: Career
-): Promise<{ message: string; avatar: StoredAvatar }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const defaultAttributes: AvatarAttributes = attributes || {
-        品格: 50,
-        情商: 50,
-        专业知识: 50,
-        人脉: 50,
-        抗压能力: 50,
-        运气: 50,
-      };
+  maleDescription: string,
+  femaleDescription: string,
+  maleName: string,
+  femaleName: string,
+  maleCareer?: Career,
+  femaleCareer?: Career
+): { message: string; characterPair: CharacterPair } {
+  const defaultAttributes: AvatarAttributes = {
+    品格: 50,
+    情商: 50,
+    专业知识: 50,
+    人脉: 50,
+    抗压能力: 50,
+    运气: 50,
+  };
 
-      const defaultCareer: Career = career || {
-        当前职位: '初级分析师',
-        目标方向: '金融行业高管',
-        工作年限: 1,
-        所属机构: '某金融机构',
-      };
+  const defaultCareer: Career = {
+    当前职位: '金融从业者',
+    目标方向: '金融行业高管',
+    工作年限: 3,
+    所属机构: '某金融机构',
+  };
 
-      const defaultStatus: Status = {
-        金钱: 50,
-        心情: 70,
-        健康: 80,
-        声望: 30,
-      };
+  const defaultStatus: Status = {
+    金钱: 50,
+    心情: 70,
+    健康: 80,
+    声望: 30,
+  };
 
-      const newAvatar: StoredAvatar = {
-        id: generateId(),
-        userId,
-        name,
-        characterDescription,
-        attributes: defaultAttributes,
-        career: defaultCareer,
-        status: defaultStatus,
-        currentScenario: null,
-        gameLog: [],
-        avatarUrl: generateAvatar(`${userId}-${name}-${Date.now()}`),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+  const maleAvatar: Avatar = {
+    id: generateId(),
+    userId,
+    name: maleName || '男主角',
+    characterDescription: maleDescription,
+    avatarUrl: generateAvatar(`${userId}-male-${Date.now()}`),
+    gender: 'male' as Gender,
+    attributes: { ...defaultAttributes },
+    career: maleCareer || { ...defaultCareer },
+    status: { ...defaultStatus },
+    currentScenario: null,
+    gameLog: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
-      const avatars = getAllAvatars();
-      avatars.push(newAvatar);
-      setJSON(AVATARS_KEY, avatars);
+  const femaleAvatar: Avatar = {
+    id: generateId(),
+    userId,
+    name: femaleName || '女主角',
+    characterDescription: femaleDescription,
+    avatarUrl: generateAvatar(`${userId}-female-${Date.now()}`),
+    gender: 'female' as Gender,
+    attributes: { ...defaultAttributes },
+    career: femaleCareer || { ...defaultCareer },
+    status: { ...defaultStatus },
+    currentScenario: null,
+    gameLog: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
-      resolve({
-        message: '角色创建成功',
-        avatar: newAvatar,
-      });
-    }, 500);
-  });
-}
+  const characterPair: CharacterPair = {
+    male: maleAvatar,
+    female: femaleAvatar,
+    relationship: {
+      harmony: 50,
+      trust: 50,
+      conflicts: 0,
+      joyfulMoments: 0,
+    },
+    currentEmotion: 'neutral' as EmotionType,
+  };
 
-export function deleteAvatar(userId: string, avatarId: string): void {
-  const avatars = getAllAvatars();
-  const filtered = avatars.filter(
-    (a) => !(a.id === avatarId && a.userId === userId)
-  );
-  setJSON(AVATARS_KEY, filtered);
+  // 保存角色对
+  setJSON(CHARACTER_PAIR_KEY, characterPair);
 
-  // Also delete game history
-  const history = getJSON<Record<string, GameEvent[]>>(GAME_HISTORY_KEY, {});
-  delete history[avatarId];
-  setJSON(GAME_HISTORY_KEY, history);
-}
-
-export function updateAvatar(avatarId: string, data: Partial<Avatar>): void {
-  const avatars = getAllAvatars();
-  const index = avatars.findIndex((a) => a.id === avatarId);
-  if (index !== -1) {
-    avatars[index] = {
-      ...avatars[index],
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    setJSON(AVATARS_KEY, avatars);
+  // 标记用户已创建角色
+  const users = getUsers();
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    users[userIndex].hasCreatedCharacters = true;
+    setJSON(USERS_KEY, users);
+    // 更新当前用户
+    setCurrentUser(users[userIndex]);
   }
+
+  return {
+    message: '角色对创建成功',
+    characterPair,
+  };
+}
+
+export function getCharacterPair(): CharacterPair | null {
+  return getJSON<CharacterPair | null>(CHARACTER_PAIR_KEY, null);
+}
+
+export function updateCharacterPair(pair: CharacterPair): void {
+  setJSON(CHARACTER_PAIR_KEY, pair);
 }
 
 // ==========================================
@@ -256,4 +285,31 @@ export function saveGameEvent(avatarId: string, event: GameEvent): void {
   }
   history[avatarId].push(event);
   setJSON(GAME_HISTORY_KEY, history);
+}
+
+export function updateAvatar(avatarId: string, data: Partial<Avatar>): void {
+  const pair = getCharacterPair();
+  if (pair) {
+    if (pair.male.id === avatarId) {
+      pair.male = { ...pair.male, ...data, updatedAt: new Date().toISOString() };
+    } else if (pair.female.id === avatarId) {
+      pair.female = { ...pair.female, ...data, updatedAt: new Date().toISOString() };
+    }
+    updateCharacterPair(pair);
+  }
+}
+
+export function deleteAvatar(userId: string, avatarId: string): void {
+  // 不再支持单角色删除
+}
+
+export function deleteCharacterPair(userId: string): void {
+  localStorage.removeItem(CHARACTER_PAIR_KEY);
+  // 重置用户角色创建标记
+  const users = getUsers();
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex !== -1) {
+    users[userIndex].hasCreatedCharacters = false;
+    setJSON(USERS_KEY, users);
+  }
 }
