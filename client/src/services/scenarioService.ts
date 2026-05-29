@@ -1,4 +1,5 @@
 import { Scenario, AvatarAttributes, Status, Career, GameEvent } from '../types';
+import { financialHistoryScenarios } from './financialHistoryScenarios';
 
 export interface ScenarioWithOutcomes extends Scenario {
   outcomes: Record<string, {
@@ -8,7 +9,8 @@ export interface ScenarioWithOutcomes extends Scenario {
   }>;
 }
 
-export const scenarios: ScenarioWithOutcomes[] = [
+// 基础场景（原有场景）
+const baseScenarios: ScenarioWithOutcomes[] = [
   {
     id: 'ib_001',
     category: '投行',
@@ -3864,3 +3866,9 @@ export function selectNextScenario(
 ): ScenarioWithOutcomes | null {
   return selectRelevantScenario(attributes, status, career, history);
 }
+
+// 合并基础场景和历史场景
+export const scenarios: ScenarioWithOutcomes[] = [
+  ...baseScenarios,
+  ...financialHistoryScenarios,
+];
