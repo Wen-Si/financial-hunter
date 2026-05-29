@@ -305,68 +305,84 @@ export const gameAPI = {
     return aiService.generateAIAction(avatar, scenario, history).then((aiResult) => {
       const selectedChoice = aiResult.selectedChoice || scenario.choices[0];
 
-      // Evaluate outcome
-      const outcome = aiService.evaluateOutcome(selectedChoice, scenario, avatar.attributes, avatar.status);
+      // Use AI to generate outcome (NEW: AI-generated results)
+      return aiService.generateAIOutcome(avatar, scenario, selectedChoice, history).then((aiOutcome) => {
+        // Apply changes
+        const newAttributes = applyChanges(
+          avatar.attributes as unknown as Record<string, number>,
+          aiOutcome.attributesChange as unknown as Partial<Record<string, number>>
+        ) as unknown as AvatarAttributes;
 
-      // Apply changes
-      const newAttributes = applyChanges(
-        avatar.attributes as unknown as Record<string, number>,
-        outcome.attributesChange as unknown as Partial<Record<string, number>>
-      ) as unknown as AvatarAttributes;
+        const newStatus = applyChanges(
+          avatar.status as unknown as Record<string, number>,
+          aiOutcome.statusChange as unknown as Partial<Record<string, number>>
+        ) as unknown as Status;
 
-      const newStatus = applyChanges(
-        avatar.status as unknown as Record<string, number>,
-        outcome.statusChange as unknown as Partial<Record<string, number>>
-      ) as unknown as Status;
+        // Check game over
+        const isGameOver = checkGameOver(newStatus);
 
-      // Check game over
-      const isGameOver = checkGameOver(newStatus);
+        // Save game event
+        const gameEvent: GameEvent = {
+          id: generateId(),
+          scenarioId: scenario.id,
+          scenarioTitle: scenario.title,
+          action: aiResult.action,
+          result: aiOutcome.description,
+          timestamp: new Date().toISOString(),
+          emotion: aiOutcome.emotion,
+        };
+        localService.saveGameEvent(avatarId, gameEvent);
 
-      // Save game event
-      const gameEvent: GameEvent = {
-        id: generateId(),
-        scenarioId: scenario.id,
-        scenarioTitle: scenario.title,
-        action: aiResult.action,
-        result: outcome.description,
-        timestamp: new Date().toISOString(),
-      };
-      localService.saveGameEvent(avatarId, gameEvent);
+        // Update avatar
+        const updatedHistory = [...history, gameEvent];
+        localService.updateAvatar(avatarId, {
+          attributes: newAttributes,
+          status: newStatus,
+          gameLog: updatedHistory,
+        });
 
-      // Update avatar
-      const updatedHistory = [...history, gameEvent];
-      localService.updateAvatar(avatarId, {
-        attributes: newAttributes,
-        status: newStatus,
-        gameLog: updatedHistory,
-      });
-
-      // Select next scenario
-      let nextScenario: Scenario | null = null;
-      if (!isGameOver) {
-        const next = scenarioService.selectNextScenario(newAttributes, newStatus, avatar.career, updatedHistory);
-        if (next) {
-          const { outcomes, ...rest } = next;
-          nextScenario = rest as Scenario;
-          localService.updateAvatar(avatarId, { currentScenario: next.id });
+        // Select next scenario (or generate AI scenario)
+        let nextScenario: Scenario | null = null;
+        if (!isGameOver) {
+          // 30% chance to generate AI scenario for more variety
+          if (Math.random() < 0.3) {
+            aiService.generateRandomScenario(avatar, updatedHistory).then(aiScenario => {
+              if (aiScenario) {
+                // Store AI-generated scenario temporarily
+                (scenarioService as any).aiGeneratedScenario = aiScenario;
+              }
+            });
+          }
+          
+          const next = scenarioService.selectNextScenario(newAttributes, newStatus, avatar.career, updatedHistory);
+          if (next) {
+            const { outcomes, ...rest } = next;
+            nextScenario = rest as Scenario;
+            localService.updateAvatar(avatarId, { currentScenario: next.id });
+          }
         }
-      }
 
-      return {
-        data: {
-          action: {
-            action: aiResult.action,
-            reasoning: aiResult.reasoning,
-            selectedChoice,
+        return {
+          data: {
+            action: {
+              action: aiResult.action,
+              reasoning: aiResult.reasoning,
+              selectedChoice,
+            },
+            outcome: {
+              description: aiOutcome.description,
+              attributesChange: aiOutcome.attributesChange,
+              statusChange: aiOutcome.statusChange,
+              emotion: aiOutcome.emotion,
+            },
+            newAttributes,
+            newStatus,
+            nextScenario,
+            gameEvent,
+            isGameOver,
           },
-          outcome,
-          newAttributes,
-          newStatus,
-          nextScenario,
-          gameEvent,
-          isGameOver,
-        },
-      };
+        };
+      });
     });
   },
 
@@ -389,130 +405,139 @@ export const gameAPI = {
     return aiService.generateCooperativeAction(pair, scenario, history).then((aiResult) => {
       const selectedChoice = aiResult.selectedChoice || scenario.choices[0];
 
-      // Evaluate outcome
-      const outcome = aiService.evaluateOutcome(selectedChoice, scenario, pair.male.attributes, pair.male.status);
+      // Use AI to generate outcome for male character (NEW: AI-generated results)
+      return aiService.generateAIOutcome(pair.male, scenario, selectedChoice, history).then((aiOutcome) => {
+        // Apply changes to male
+        const newAttributesMale = applyChanges(
+          pair.male.attributes as unknown as Record<string, number>,
+          aiOutcome.attributesChange as unknown as Partial<Record<string, number>>
+        ) as unknown as AvatarAttributes;
 
-      // 计算情绪
-      const emotion = calculateEmotion(outcome);
+        const newStatusMale = applyChanges(
+          pair.male.status as unknown as Record<string, number>,
+          aiOutcome.statusChange as unknown as Partial<Record<string, number>>
+        ) as unknown as Status;
 
-      // Apply changes to male
-      const newAttributesMale = applyChanges(
-        pair.male.attributes as unknown as Record<string, number>,
-        outcome.attributesChange as unknown as Partial<Record<string, number>>
-      ) as unknown as AvatarAttributes;
+        // 为女性角色应用稍微不同的变化（合作时变化略有不同）
+        const femaleAttributeChange = { ...aiOutcome.attributesChange };
+        const femaleStatusChange = { ...aiOutcome.statusChange };
+        
+        // 合作效果：女性角色从合作中获得额外加成
+        Object.keys(femaleAttributeChange).forEach(key => {
+          const val = femaleAttributeChange[key as keyof AvatarAttributes] || 0;
+          femaleAttributeChange[key as keyof AvatarAttributes] = Math.floor(val * 0.7); // 获得70%的效果
+        });
+        
+        Object.keys(femaleStatusChange).forEach(key => {
+          const val = femaleStatusChange[key as keyof Status] || 0;
+          // 女性从合作中获得更好的心情加成
+          if (val > 0 && key === '心情') {
+            femaleStatusChange[key as keyof Status] = val + 2;
+          } else {
+            femaleStatusChange[key as keyof Status] = Math.floor(val * 0.7);
+          }
+        });
 
-      const newStatusMale = applyChanges(
-        pair.male.status as unknown as Record<string, number>,
-        outcome.statusChange as unknown as Partial<Record<string, number>>
-      ) as unknown as Status;
+        const newAttributesFemale = applyChanges(
+          pair.female.attributes as unknown as Record<string, number>,
+          femaleAttributeChange as unknown as Partial<Record<string, number>>
+        ) as unknown as AvatarAttributes;
 
-      // 为女性角色应用稍微不同的变化（合作时变化略有不同）
-      const femaleAttributeChange = { ...outcome.attributesChange };
-      const femaleStatusChange = { ...outcome.statusChange };
-      
-      // 合作效果：女性角色从合作中获得额外加成
-      Object.keys(femaleAttributeChange).forEach(key => {
-        const val = femaleAttributeChange[key as keyof AvatarAttributes] || 0;
-        femaleAttributeChange[key as keyof AvatarAttributes] = Math.floor(val * 0.7); // 获得70%的效果
-      });
-      
-      Object.keys(femaleStatusChange).forEach(key => {
-        const val = femaleStatusChange[key as keyof Status] || 0;
-        // 女性从合作中获得更好的心情加成
-        if (val > 0 && key === '心情') {
-          femaleStatusChange[key as keyof Status] = val + 2;
-        } else {
-          femaleStatusChange[key as keyof Status] = Math.floor(val * 0.7);
-        }
-      });
+        const newStatusFemale = applyChanges(
+          pair.female.status as unknown as Record<string, number>,
+          femaleStatusChange as unknown as Partial<Record<string, number>>
+        ) as unknown as Status;
 
-      const newAttributesFemale = applyChanges(
-        pair.female.attributes as unknown as Record<string, number>,
-        femaleAttributeChange as unknown as Partial<Record<string, number>>
-      ) as unknown as AvatarAttributes;
+        // Check game over (任一角色状态耗尽)
+        const isGameOver = checkGameOver(newStatusMale) || checkGameOver(newStatusFemale);
 
-      const newStatusFemale = applyChanges(
-        pair.female.status as unknown as Record<string, number>,
-        femaleStatusChange as unknown as Partial<Record<string, number>>
-      ) as unknown as Status;
+        // Save game event for both
+        const gameEvent: GameEvent = {
+          id: generateId(),
+          scenarioId: scenario.id,
+          scenarioTitle: scenario.title,
+          action: aiResult.action,
+          result: aiOutcome.description,
+          timestamp: new Date().toISOString(),
+          emotion: aiOutcome.emotion,
+        };
 
-      // Check game over (任一角色状态耗尽)
-      const isGameOver = checkGameOver(newStatusMale) || checkGameOver(newStatusFemale);
+        localService.saveGameEvent(pair.male.id, gameEvent);
+        localService.saveGameEvent(pair.female.id, gameEvent);
 
-      // Save game event for both
-      const gameEvent: GameEvent = {
-        id: generateId(),
-        scenarioId: scenario.id,
-        scenarioTitle: scenario.title,
-        action: aiResult.action,
-        result: outcome.description,
-        timestamp: new Date().toISOString(),
-        emotion,
-      };
+        // 更新角色对
+        const updatedHistory = [...history, gameEvent];
+        localService.updateAvatar(pair.male.id, {
+          attributes: newAttributesMale,
+          status: newStatusMale,
+          gameLog: updatedHistory,
+        });
+        localService.updateAvatar(pair.female.id, {
+          attributes: newAttributesFemale,
+          status: newStatusFemale,
+          gameLog: updatedHistory,
+        });
 
-      localService.saveGameEvent(pair.male.id, gameEvent);
-      localService.saveGameEvent(pair.female.id, gameEvent);
+        // 更新关系状态
+        const updatedPair = updateRelationship(pair, { emotion: aiOutcome.emotion, attributesChange: aiOutcome.attributesChange });
+        localService.updateCharacterPair(updatedPair);
 
-      // 更新角色对
-      const updatedHistory = [...history, gameEvent];
-      localService.updateAvatar(pair.male.id, {
-        attributes: newAttributesMale,
-        status: newStatusMale,
-        gameLog: updatedHistory,
-      });
-      localService.updateAvatar(pair.female.id, {
-        attributes: newAttributesFemale,
-        status: newStatusFemale,
-        gameLog: updatedHistory,
-      });
-
-      // 更新关系状态
-      const updatedPair = updateRelationship(pair, { emotion, attributesChange: outcome.attributesChange });
-      localService.updateCharacterPair(updatedPair);
-
-      // Select next scenario
-      let nextScenario: Scenario | null = null;
-      let nextComicFrames: GameActionResponse['comicFrames'] = undefined;
-      
-      if (!isGameOver) {
-        const next = scenarioService.selectNextScenario(newAttributesMale, newStatusMale, pair.male.career, updatedHistory);
-        if (next) {
-          const { outcomes, ...rest } = next;
-          nextScenario = rest as Scenario;
-          localService.updateAvatar(pair.male.id, { currentScenario: next.id });
-          localService.updateAvatar(pair.female.id, { currentScenario: next.id });
+        // Select next scenario (or generate AI scenario)
+        let nextScenario: Scenario | null = null;
+        let nextComicFrames: GameActionResponse['comicFrames'] = undefined;
+        
+        if (!isGameOver) {
+          // 30% chance to generate AI scenario for more variety
+          if (Math.random() < 0.3) {
+            aiService.generateRandomScenario(pair.male, updatedHistory).then(aiScenario => {
+              if (aiScenario) {
+                // Store AI-generated scenario temporarily
+                (scenarioService as any).aiGeneratedScenario = aiScenario;
+              }
+            });
+          }
           
-          // 生成下一个场景的漫画分镜
-          nextComicFrames = generateComicFrames(
-            next,
-            pair.male.name,
-            pair.female.name,
-            aiResult.action,
-            outcome.description,
-            emotion
-          );
+          const next = scenarioService.selectNextScenario(newAttributesMale, newStatusMale, pair.male.career, updatedHistory);
+          if (next) {
+            const { outcomes, ...rest } = next;
+            nextScenario = rest as Scenario;
+            localService.updateAvatar(pair.male.id, { currentScenario: next.id });
+            localService.updateAvatar(pair.female.id, { currentScenario: next.id });
+            
+            // 生成下一个场景的漫画分镜
+            nextComicFrames = generateComicFrames(
+              next,
+              pair.male.name,
+              pair.female.name,
+              aiResult.action,
+              aiOutcome.description,
+              aiOutcome.emotion
+            );
+          }
         }
-      }
 
-      return {
-        data: {
-          action: {
-            action: aiResult.action,
-            reasoning: aiResult.reasoning,
-            selectedChoice,
+        return {
+          data: {
+            action: {
+              action: aiResult.action,
+              reasoning: aiResult.reasoning,
+              selectedChoice,
+            },
+            outcome: {
+              description: aiOutcome.description,
+              attributesChange: aiOutcome.attributesChange,
+              statusChange: aiOutcome.statusChange,
+              emotion: aiOutcome.emotion,
+            },
+            newAttributes: newAttributesMale,
+            newStatus: newStatusMale,
+            nextScenario,
+            gameEvent,
+            isGameOver,
+            comicFrames: nextComicFrames,
           },
-          outcome: {
-            ...outcome,
-            emotion,
-          },
-          newAttributes: newAttributesMale,
-          newStatus: newStatusMale,
-          nextScenario,
-          gameEvent,
-          isGameOver,
-          comicFrames: nextComicFrames,
-        },
-      };
+        };
+      });
     });
   },
 
