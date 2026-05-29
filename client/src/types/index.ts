@@ -82,10 +82,21 @@ export interface CharacterPair {
 }
 
 // 场景相关类型
+// 叙事元素类型
+export type NarrativeElement = 
+  | 'mystery'      // 悬疑：存在未知、线索、暗示
+  | 'twist'        // 反转：结果出乎意料
+  | 'climax'       // 高潮：紧张对峙、关键抉择
+  | 'foreshadowing' // 伏笔：预示未来事件
+  | 'crisis'       // 危机：突发状况
+  | 'revelation';  // 揭露：真相揭晓
+
 export interface Choice {
   id: string;
   text: string;
   requiresBoth?: boolean; // 是否需要双方同意
+  isTrap?: boolean;       // 是否是陷阱选项（看似正确实则危险）
+  isHidden?: boolean;     // 是否是隐藏选项（需要特定条件）
 }
 
 export interface Outcome {
@@ -93,6 +104,16 @@ export interface Outcome {
   attributesChange: Partial<AvatarAttributes>;
   statusChange: Partial<Status>;
   emotion?: EmotionType; // 结果带来的情绪
+  // 反转相关
+  hasTwist?: boolean;           // 是否包含反转
+  twistDescription?: string;     // 反转内容（事后揭晓）
+  isBetrayal?: boolean;         // 是否是背叛事件
+  isSurprise?: boolean;         // 是否是惊喜事件
+  // 揭露相关
+  revealedTruth?: string;        // 揭露的真相
+  hiddenClue?: string;          // 隐藏的线索
+  // 后续影响
+  futureImpact?: string;        // 对未来的暗示
 }
 
 export interface Scenario {
@@ -103,6 +124,16 @@ export interface Scenario {
   description: string;
   context: string;
   choices: Choice[];
+  // 悬疑/叙事元素
+  narrativeElements?: NarrativeElement[];  // 包含的叙事元素
+  mysteryHint?: string;                    // 悬疑线索/暗示
+  foreshadowing?: string;                 // 伏笔内容
+  // 反转相关
+  possibleTwist?: {                       // 可能发生的反转
+    condition: string;                     // 触发条件
+    description: string;                  // 反转描述
+    probability: number;                  // 发生概率 0-1
+  };
 }
 
 // 漫画帧
