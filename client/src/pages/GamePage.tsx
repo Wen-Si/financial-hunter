@@ -454,7 +454,7 @@ export default function GamePage() {
       {/* 关卡视频播放器 */}
       {showLevelVideo && (
         <VideoPlayer
-          videoUrl={`/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
+          videoUrl={`/financial-hunter/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
           onComplete={() => {
             setShowLevelVideo(false);
             if (pendingScenario) {

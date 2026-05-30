@@ -239,7 +239,7 @@ export default function LobbyPage() {
       {/* 开始冒险视频播放器 */}
       {showStartVideo && (
         <VideoPlayer
-          videoUrl="/video-start.mp4"
+          videoUrl="/financial-hunter/video-start.mp4"
           onComplete={handleVideoComplete}
           autoPlay={true}
           showSkip={true}
