@@ -1,9 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { gameAPI, avatarAPI } from '../services/api';
-import { CharacterPair, Scenario, ComicFrame, EmotionType } from '../types';
+import { avatarAPI } from '../services/api';
+import { CharacterPair, Scenario, EmotionType } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
 import VideoPlayer from '../components/VideoPlayer';
+import DialoguePanel from '../components/DialoguePanel';
+import {
+  DialogueMessage,
+  CaseResult,
+  generateCaseIntroduction,
+  determineDialogueStructure,
+  generateSingleDialogue,
+  generateCaseResult,
+} from '../services/dialogueService';
+import * as scenarioService from '../services/scenarioService';
+import * as localService from '../services/localStorage';
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -14,35 +25,34 @@ export default function GamePage() {
 
   // 游戏状态
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isAutoRun, setIsAutoRun] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [gameOverReason, setGameOverReason] = useState('');
-  const [stepCount, setStepCount] = useState(0);
+  const [caseCount, setCaseCount] = useState(0);
 
-  // 场景状态
+  // 当前场景
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
-  const [comicFrames, setComicFrames] = useState<ComicFrame[]>([]);
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
 
-  // 行动结果
-  const [lastAction, setLastAction] = useState<any>(null);
+  // 对话状态
+  const [messages, setMessages] = useState<DialogueMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [totalRounds, setTotalRounds] = useState(12);
+  const [firstSpeaker, setFirstSpeaker] = useState<'male' | 'female'>('male');
+  const [caseResult, setCaseResult] = useState<CaseResult | null>(null);
 
-  // 自动运行定时器
-  const autoRunTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  // 视频播放状态
+  // 视频状态
   const [showLevelVideo, setShowLevelVideo] = useState(false);
-  const [pendingScenario, setPendingScenario] = useState<Scenario | null>(null);
+
+  // 流式文本缓冲
+  const streamingRef = useRef(false);
+  const abortRef = useRef(false);
 
   // 初始化游戏
   useEffect(() => {
     initGame();
     return () => {
-      if (autoRunTimerRef.current) {
-        clearInterval(autoRunTimerRef.current);
-      }
+      abortRef.current = true;
     };
   }, []);
 
@@ -56,90 +66,260 @@ export default function GamePage() {
       }
       setCharacterPair(pairRes.data);
 
-      // 开始游戏
-      const startRes = await gameAPI.startWithPair();
-      const data = startRes.data;
-
-      setCurrentScenario(data.scenario);
-      setComicFrames(data.comicFrames || []);
-      setStepCount(0);
+      // 选择第一个场景
+      const pair = pairRes.data;
+      const scenario = selectScenario(pair);
+      if (scenario) {
+        setCurrentScenario(scenario);
+        localService.updateAvatar(pair.male.id, { currentScenario: scenario.id });
+        localService.updateAvatar(pair.female.id, { currentScenario: scenario.id });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '游戏初始化失败');
+      setError(err instanceof Error ? err.message : '初始化失败');
     } finally {
       setLoading(false);
     }
   };
 
-  // 执行行动
-  const executeAction = useCallback(async () => {
-    if (isGameOver || actionLoading) return;
+  // 选择场景
+  const selectScenario = (pair: CharacterPair): Scenario | null => {
+    const history = localService.getGameHistory(pair.male.id);
+    const scenario = scenarioService.selectRelevantScenario(
+      pair.male.attributes,
+      pair.male.status,
+      pair.male.career,
+      history
+    );
+    return scenario || null;
+  };
 
-    setActionLoading(true);
+  // ==========================================
+  // 核心：启动案例对话流程
+  // ==========================================
+  const startCaseDialogue = useCallback(async () => {
+    if (!characterPair || !currentScenario || streamingRef.current) return;
+
+    abortRef.current = false;
+    streamingRef.current = true;
+    setIsStreaming(true);
+    setCaseResult(null);
+    setMessages([]);
+    setCurrentRound(0);
+
     try {
-      const res = await gameAPI.executeActionWithPair();
-      const data = res.data;
+      // 步骤1：流式生成案例介绍
+      const introMsg: DialogueMessage = { role: 'narrator', content: '' };
+      setMessages([introMsg]);
 
-      setLastAction(data);
-      setStepCount((prev) => prev + 1);
-
-      // 如果有下一关，先播放视频再显示场景
-      if (data.nextScenario) {
-        setPendingScenario(data.nextScenario);
-        setShowLevelVideo(true);
-      } else {
-        setCurrentScenario(data.nextScenario);
+      for await (const token of generateCaseIntroduction(currentScenario, characterPair)) {
+        if (abortRef.current) return;
+        introMsg.content += token;
+        setMessages([{ ...introMsg }]);
       }
 
-      setComicFrames(data.comicFrames || []);
-      setCurrentFrameIndex(0);
+      // 步骤2：确定对话轮数和发言顺序
+      const structure = await determineDialogueStructure(currentScenario, characterPair);
+      setTotalRounds(structure.totalRounds);
+      setFirstSpeaker(structure.firstSpeaker);
 
-      // 更新角色对
-      const pairRes = await avatarAPI.getCharacterPair();
-      if (pairRes.data) {
-        setCharacterPair(pairRes.data);
+      // 步骤3：逐轮生成对话
+      for (let round = 1; round <= structure.totalRounds; round++) {
+        if (abortRef.current) return;
+
+        const speaker: 'male' | 'female' =
+          round === 1
+            ? structure.firstSpeaker
+            : structure.firstSpeaker === 'male'
+            ? 'female'
+            : 'male';
+
+        const dialogueMsg: DialogueMessage = { role: speaker, content: '' };
+        setMessages((prev) => [...prev, dialogueMsg]);
+        setCurrentRound(round);
+
+        for await (const token of generateSingleDialogue(
+          characterPair,
+          currentScenario,
+          speaker,
+          messages,
+          round,
+          structure.totalRounds
+        )) {
+          if (abortRef.current) return;
+          dialogueMsg.content += token;
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = { ...dialogueMsg };
+            return updated;
+          });
+        }
       }
 
-      // 检查游戏结束
-      if (data.isGameOver) {
-        setIsGameOver(true);
-        setGameOverReason('任一角色的状态值耗尽了！');
-      }
+      // 步骤4：生成案例结果
+      const resultText = await collectStreamText(
+        generateCaseResult(characterPair, currentScenario, messages)
+      );
+
+      // 解析结果
+      const result = parseCaseResult(resultText);
+      setCaseResult(result);
+
+      // 步骤5：应用结果到角色
+      applyResult(result);
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : '行动执行失败');
+      console.error('Dialogue error:', err);
+      setError('对话生成出错，请重试');
     } finally {
-      setActionLoading(false);
+      streamingRef.current = false;
+      setIsStreaming(false);
     }
-  }, [isGameOver, actionLoading]);
+  }, [characterPair, currentScenario, messages]);
 
-  // 自动运行
-  const toggleAutoRun = () => {
-    if (isAutoRun) {
-      if (autoRunTimerRef.current) {
-        clearInterval(autoRunTimerRef.current);
-        autoRunTimerRef.current = null;
+  // 收集流式文本为完整字符串
+  const collectStreamText = async (generator: AsyncGenerator<string>): Promise<string> => {
+    let text = '';
+    for await (const token of generator) {
+      if (abortRef.current) return text;
+      text += token;
+    }
+    return text;
+  };
+
+  // 解析案例结果
+  const parseCaseResult = (text: string): CaseResult => {
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        return {
+          description: parsed.description || '案例已完成。',
+          reasoning: parsed.reasoning || '',
+          attributesChange: parsed.attributesChange || {},
+          statusChange: parsed.statusChange || {},
+          emotion: ['joy', 'conflict', 'sadness', 'tension', 'harmony', 'neutral'].includes(parsed.emotion)
+            ? parsed.emotion as EmotionType
+            : 'neutral',
+        };
       }
-      setIsAutoRun(false);
+    } catch (e) {
+      console.warn('Failed to parse case result:', e);
+    }
+    return {
+      description: text.slice(0, 200) || '案例已完成。',
+      reasoning: '',
+      attributesChange: { 专业知识: 5, 情商: 3 },
+      statusChange: { 金钱: 5, 心情: 3 },
+      emotion: 'neutral',
+    };
+  };
+
+  // 应用结果到角色
+  const applyResult = (result: CaseResult) => {
+    if (!characterPair) return;
+
+    const pair = { ...characterPair };
+
+    // 更新男性角色属性
+    const maleAttrs = { ...pair.male.attributes };
+    const maleStatus = { ...pair.male.status };
+    Object.entries(result.attributesChange).forEach(([key, val]) => {
+      const k = key as keyof typeof maleAttrs;
+      if (k in maleAttrs) maleAttrs[k] = Math.max(0, Math.min(1000, maleAttrs[k] + (val as number)));
+    });
+    Object.entries(result.statusChange).forEach(([key, val]) => {
+      const k = key as keyof typeof maleStatus;
+      if (k in maleStatus) maleStatus[k] = Math.max(0, Math.min(1000, maleStatus[k] + (val as number)));
+    });
+    pair.male = { ...pair.male, attributes: maleAttrs, status: maleStatus };
+
+    // 更新女性角色属性（70%效果+心情加成）
+    const femaleAttrs = { ...pair.female.attributes };
+    const femaleStatus = { ...pair.female.status };
+    Object.entries(result.attributesChange).forEach(([key, val]) => {
+      const k = key as keyof typeof femaleAttrs;
+      if (k in femaleAttrs) femaleAttrs[k] = Math.max(0, Math.min(1000, femaleAttrs[k] + Math.floor((val as number) * 0.7)));
+    });
+    Object.entries(result.statusChange).forEach(([key, val]) => {
+      const k = key as keyof typeof femaleStatus;
+      if (k in femaleStatus) {
+        let v = Math.floor((val as number) * 0.7);
+        if ((val as number) > 0 && k === '心情') v = (val as number) + 2;
+        femaleStatus[k] = Math.max(0, Math.min(1000, femaleStatus[k] + v));
+      }
+    });
+    pair.female = { ...pair.female, attributes: femaleAttrs, status: femaleStatus };
+
+    // 更新关系
+    const emotion = result.emotion;
+    switch (emotion) {
+      case 'joy':
+        pair.relationship.harmony = Math.min(100, pair.relationship.harmony + 5);
+        pair.relationship.trust = Math.min(100, pair.relationship.trust + 3);
+        pair.relationship.joyfulMoments++;
+        pair.currentEmotion = 'joy';
+        break;
+      case 'conflict':
+        pair.relationship.harmony = Math.max(0, pair.relationship.harmony - 10);
+        pair.relationship.trust = Math.max(0, pair.relationship.trust - 5);
+        pair.relationship.conflicts++;
+        pair.currentEmotion = 'conflict';
+        break;
+      case 'sadness':
+        pair.relationship.harmony = Math.max(0, pair.relationship.harmony - 5);
+        pair.currentEmotion = 'sadness';
+        break;
+      default:
+        pair.currentEmotion = emotion;
+    }
+
+    // 保存
+    localService.updateCharacterPair(pair);
+    localService.updateAvatar(pair.male.id, { attributes: maleAttrs, status: maleStatus });
+    localService.updateAvatar(pair.female.id, { attributes: femaleAttrs, status: femaleStatus });
+
+    setCharacterPair(pair);
+    setCaseCount((prev) => prev + 1);
+
+    // 检查游戏结束
+    if (maleStatus.金钱 <= 0 || maleStatus.健康 <= 0 || maleStatus.声望 <= 0 || maleStatus.心情 <= 0 ||
+        femaleStatus.金钱 <= 0 || femaleStatus.健康 <= 0 || femaleStatus.声望 <= 0 || femaleStatus.心情 <= 0) {
+      setIsGameOver(true);
+      setGameOverReason('任一角色的状态值耗尽了！');
+    }
+  };
+
+  // 进入下一个案例
+  const handleNextCase = async () => {
+    if (!characterPair) return;
+
+    // 选择下一个场景
+    const scenario = selectScenario(characterPair);
+    if (scenario) {
+      setCurrentScenario(scenario);
+      localService.updateAvatar(characterPair.male.id, { currentScenario: scenario.id });
+      localService.updateAvatar(characterPair.female.id, { currentScenario: scenario.id });
+
+      // 播放关卡视频
+      setShowLevelVideo(true);
     } else {
-      setIsAutoRun(true);
-      autoRunTimerRef.current = setInterval(() => {
-        executeAction();
-      }, 5000);
+      setError('没有更多可用场景了');
     }
   };
 
-  // 下一帧漫画
-  const nextFrame = () => {
-    if (currentFrameIndex < comicFrames.length - 1) {
-      setCurrentFrameIndex((prev) => prev + 1);
-    }
+  // 视频播放完成
+  const handleVideoComplete = () => {
+    setShowLevelVideo(false);
+    // 视频播放完成后自动开始对话
+    setTimeout(() => startCaseDialogue(), 500);
   };
 
-  // 上一帧漫画
-  const prevFrame = () => {
-    if (currentFrameIndex > 0) {
-      setCurrentFrameIndex((prev) => prev - 1);
+  // 首次加载时自动开始第一个案例的对话
+  useEffect(() => {
+    if (!loading && characterPair && currentScenario && !isStreaming && messages.length === 0 && !caseResult) {
+      startCaseDialogue();
     }
-  };
+  }, [loading, characterPair, currentScenario]);
 
   if (loading) {
     return (
@@ -148,276 +328,120 @@ export default function GamePage() {
           <div className="loading-dot w-3 h-3 bg-yellow-400 rounded-full mx-1"></div>
           <div className="loading-dot w-3 h-3 bg-yellow-400 rounded-full mx-1"></div>
           <div className="loading-dot w-3 h-3 bg-yellow-400 rounded-full mx-1"></div>
-          <p className="text-dark-400 mt-4">正在加载游戏...</p>
         </div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={() => navigate('/lobby')} className="btn-secondary">
-            返回大厅
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const currentFrame = comicFrames[currentFrameIndex];
 
   return (
-    <div className="min-h-screen bg-dark-950 py-4 px-4">
+    <div className="min-h-screen bg-dark-950 py-6 px-4">
       <div className="max-w-6xl mx-auto">
         {/* 顶部导航 */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate('/lobby')}
-            className="text-dark-400 hover:text-white transition-colors"
-          >
-            ← 返回大厅
-          </button>
-          <div className="flex items-center space-x-4">
-            <span className="text-dark-400 text-sm">
-              第 {stepCount + 1} 步
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <button onClick={() => navigate('/lobby')} className="text-dark-400 hover:text-white transition-colors">
+              ← 返回
+            </button>
+            <h1 className="text-xl font-bold text-gold-gradient">金融猎手</h1>
+            <span className="text-xs text-dark-500 bg-dark-800 px-2 py-1 rounded">
+              第 {caseCount + 1} 个案例
             </span>
-            <span className={`text-2xl ${characterPair ? EMOTION_COLORS[characterPair.currentEmotion] : ''}`}>
-              {characterPair ? EMOTION_ICONS[characterPair.currentEmotion] : '😐'}
-            </span>
-            <span className="text-dark-300">
-              {characterPair ? EMOTION_LABELS[characterPair.currentEmotion] : '平静'}
-            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            {characterPair && (
+              <span className={`text-sm ${EMOTION_COLORS[characterPair.currentEmotion]}`}>
+                {EMOTION_ICONS[characterPair.currentEmotion]} {EMOTION_LABELS[characterPair.currentEmotion]}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* 漫画展示区 */}
-        <div className="mb-6">
-          {currentFrame && (
-            <div className="glass rounded-xl overflow-hidden">
-              {/* 漫画图片 */}
-              <div className="relative aspect-video bg-dark-900">
-                <img
-                  src={currentFrame.imageUrl}
-                  alt="场景"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop';
-                  }}
-                />
-                
-                {/* 对话气泡 */}
-                {currentFrame.speaker && (
-                  <div className="absolute top-4 left-4">
-                    <div className="bg-white text-dark-900 rounded-lg px-4 py-2 shadow-lg max-w-xs">
-                      <p className="font-bold text-sm">{currentFrame.speaker}</p>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-4 text-red-400 text-sm">
+            {error}
+            <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">✕</button>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* 左侧：角色信息 */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* 角色对信息 */}
+            {characterPair && (
+              <>
+                {/* 男性角色 */}
+                <div className="glass rounded-xl p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    {characterPair.male.avatarUrl ? (
+                      <img src={characterPair.male.avatarUrl} alt={characterPair.male.name} className="w-10 h-10 rounded-lg object-cover border-2 border-blue-400/30" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">{characterPair.male.name.charAt(0)}</div>
+                    )}
+                    <div>
+                      <h3 className="text-white font-semibold text-sm">{characterPair.male.name}</h3>
+                      <p className="text-xs text-dark-400">{characterPair.male.career.当前职位}</p>
                     </div>
                   </div>
-                )}
-                
-                {/* 情绪标签 */}
-                {currentFrame.emotion && (
-                  <div className="absolute top-4 right-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium bg-dark-950/80 ${EMOTION_COLORS[currentFrame.emotion]}`}>
-                      {EMOTION_ICONS[currentFrame.emotion]} {EMOTION_LABELS[currentFrame.emotion]}
-                    </span>
+                  <div className="space-y-1.5">
+                    <AttributeMini label="金钱" value={characterPair.male.status.金钱} />
+                    <AttributeMini label="心情" value={characterPair.male.status.心情} />
+                    <AttributeMini label="健康" value={characterPair.male.status.健康} />
+                    <AttributeMini label="声望" value={characterPair.male.status.声望} />
                   </div>
-                )}
-                
-                {/* 分镜指示器 */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  {comicFrames.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentFrameIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        idx === currentFrameIndex ? 'bg-yellow-400 w-4' : 'bg-dark-500'
-                      }`}
-                    />
-                  ))}
                 </div>
-              </div>
-              
-              {/* 漫画说明文字 */}
-              <div className="p-4 bg-dark-900/50">
-                <p className="text-dark-200 text-center text-sm leading-relaxed">
-                  {currentFrame.caption}
-                </p>
-                
-                {/* 漫画导航 */}
-                <div className="flex justify-center space-x-4 mt-3">
-                  <button
-                    onClick={prevFrame}
-                    disabled={currentFrameIndex === 0}
-                    className="px-4 py-1 bg-dark-700 text-dark-300 rounded disabled:opacity-50"
-                  >
-                    ← 上一页
-                  </button>
-                  <span className="text-dark-500 text-sm">
-                    {currentFrameIndex + 1} / {comicFrames.length}
-                  </span>
-                  <button
-                    onClick={nextFrame}
-                    disabled={currentFrameIndex === comicFrames.length - 1}
-                    className="px-4 py-1 bg-dark-700 text-dark-300 rounded disabled:opacity-50"
-                  >
-                    下一页 →
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* 左侧：角色信息 */}
-          <div className="space-y-4">
-            {/* 男性角色 */}
-            <div className="glass rounded-xl p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <span className="text-2xl">👨</span>
-                <div>
-                  <h3 className="text-white font-semibold">{characterPair?.male.name}</h3>
-                  <p className="text-dark-400 text-xs">{characterPair?.male.career.当前职位}</p>
+                {/* 女性角色 */}
+                <div className="glass rounded-xl p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    {characterPair.female.avatarUrl ? (
+                      <img src={characterPair.female.avatarUrl} alt={characterPair.female.name} className="w-10 h-10 rounded-lg object-cover border-2 border-pink-400/30" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold">{characterPair.female.name.charAt(0)}</div>
+                    )}
+                    <div>
+                      <h3 className="text-white font-semibold text-sm">{characterPair.female.name}</h3>
+                      <p className="text-xs text-dark-400">{characterPair.female.career.当前职位}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <AttributeMini label="金钱" value={characterPair.female.status.金钱} />
+                    <AttributeMini label="心情" value={characterPair.female.status.心情} />
+                    <AttributeMini label="健康" value={characterPair.female.status.健康} />
+                    <AttributeMini label="声望" value={characterPair.female.status.声望} />
+                  </div>
                 </div>
-                {characterPair?.male.avatarUrl && (
-                  <img
-                    src={characterPair.male.avatarUrl}
-                    alt={characterPair.male.name}
-                    className="w-10 h-10 rounded-lg object-cover ml-auto"
-                  />
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <AttributeMini label="心情" value={characterPair?.male.status.心情 || 0} />
-                <AttributeMini label="健康" value={characterPair?.male.status.健康 || 0} />
-                <AttributeMini label="金钱" value={characterPair?.male.status.金钱 || 0} />
-                <AttributeMini label="声望" value={characterPair?.male.status.声望 || 0} />
-              </div>
-            </div>
 
-            {/* 女性角色 */}
-            <div className="glass rounded-xl p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <span className="text-2xl">👩</span>
-                <div>
-                  <h3 className="text-white font-semibold">{characterPair?.female.name}</h3>
-                  <p className="text-dark-400 text-xs">{characterPair?.female.career.当前职位}</p>
+                {/* 合作关系 */}
+                <div className="glass rounded-xl p-4">
+                  <h4 className="text-xs font-medium text-dark-400 mb-2">合作关系</h4>
+                  <div className="grid grid-cols-2 gap-2 text-center">
+                    <div className="bg-dark-800/50 rounded-lg p-2">
+                      <div className="text-lg font-bold text-green-400">{characterPair.relationship.harmony}</div>
+                      <div className="text-xs text-dark-500">和谐度</div>
+                    </div>
+                    <div className="bg-dark-800/50 rounded-lg p-2">
+                      <div className="text-lg font-bold text-blue-400">{characterPair.relationship.trust}</div>
+                      <div className="text-xs text-dark-500">信任度</div>
+                    </div>
+                  </div>
                 </div>
-                {characterPair?.female.avatarUrl && (
-                  <img
-                    src={characterPair.female.avatarUrl}
-                    alt={characterPair.female.name}
-                    className="w-10 h-10 rounded-lg object-cover ml-auto"
-                  />
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <AttributeMini label="心情" value={characterPair?.female.status.心情 || 0} />
-                <AttributeMini label="健康" value={characterPair?.female.status.健康 || 0} />
-                <AttributeMini label="金钱" value={characterPair?.female.status.金钱 || 0} />
-                <AttributeMini label="声望" value={characterPair?.female.status.声望 || 0} />
-              </div>
-            </div>
-
-            {/* 合作关系 */}
-            <div className="glass rounded-xl p-4">
-              <h4 className="text-sm font-medium text-dark-400 mb-2">合作关系</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-green-400">和谐度</span>
-                  <span className="text-white">{characterPair?.relationship.harmony || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-blue-400">信任度</span>
-                  <span className="text-white">{characterPair?.relationship.trust || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-400">冲突次数</span>
-                  <span className="text-white">{characterPair?.relationship.conflicts || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-yellow-400">欢乐时刻</span>
-                  <span className="text-white">{characterPair?.relationship.joyfulMoments || 0}</span>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
-          {/* 中间：场景信息 */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* 场景卡片 */}
+          {/* 右侧：对话面板 */}
+          <div className="lg:col-span-8">
             {currentScenario && (
-              <div className="glass rounded-xl p-5">
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className="px-2 py-1 bg-yellow-500/10 text-yellow-400 rounded text-xs">
-                    {currentScenario.category}
-                  </span>
-                  <span className="px-2 py-1 bg-dark-700 text-dark-300 rounded text-xs">
-                    难度 {currentScenario.difficulty}/5
-                  </span>
-                </div>
-                <h2 className="text-xl font-bold text-white mb-2">{currentScenario.title}</h2>
-                <p className="text-dark-300 text-sm leading-relaxed">{currentScenario.description}</p>
-                {currentScenario.context && (
-                  <div className="mt-3 p-3 bg-dark-800/50 rounded-lg">
-                    <p className="text-dark-400 text-xs">{currentScenario.context}</p>
-                  </div>
-                )}
-              </div>
+              <DialoguePanel
+                messages={messages}
+                isStreaming={isStreaming}
+                currentRound={currentRound}
+                totalRounds={totalRounds}
+                pair={characterPair}
+                caseResult={caseResult}
+                onExecuteNext={handleNextCase}
+              />
             )}
-
-            {/* 行动结果 */}
-            {lastAction && (
-              <div className="glass rounded-xl p-5 border-l-4 border-l-emerald-500">
-                <h4 className="text-emerald-400 font-medium mb-2 flex items-center">
-                  {EMOTION_ICONS[lastAction.outcome.emotion || 'neutral']} 行动结果
-                </h4>
-                <p className="text-dark-200 text-sm leading-relaxed mb-3">
-                  {lastAction.outcome.description}
-                </p>
-                
-                {/* AI决策 */}
-                <div className="bg-dark-800/50 rounded-lg p-3 mb-3">
-                  <p className="text-xs text-dark-400 mb-1">AI决策理由</p>
-                  <p className="text-sm text-dark-300">{lastAction.action.reasoning}</p>
-                </div>
-                
-                {/* 属性变化 */}
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(lastAction.outcome.attributesChange || {}).map(([key, val]) => (
-                    <span
-                      key={key}
-                      className={`px-2 py-1 rounded text-xs ${
-                        (val as number) > 0 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
-                      }`}
-                    >
-                      {key} {Number(val) > 0 ? `+${val}` : val}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 操作按钮 */}
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={executeAction}
-                disabled={actionLoading || isGameOver}
-                className="btn-primary disabled:opacity-50"
-              >
-                {actionLoading ? 'AI思考中...' : '执行下一步'}
-              </button>
-              <button
-                onClick={toggleAutoRun}
-                disabled={actionLoading || isGameOver}
-                className={`${isAutoRun ? 'btn-danger' : 'btn-secondary'} disabled:opacity-50`}
-              >
-                {isAutoRun ? '停止自动' : '自动运行(5秒)'}
-              </button>
-            </div>
           </div>
         </div>
 
@@ -427,16 +451,14 @@ export default function GamePage() {
             <div className="glass rounded-xl p-8 max-w-md text-center">
               <div className="text-6xl mb-4">🎮</div>
               <h2 className="text-2xl font-bold text-white mb-2">游戏结束</h2>
-              <p className="text-dark-300 mb-2">{gameOverReason}</p>
-              <p className="text-dark-400 text-sm mb-6">
-                你们坚持了 {stepCount} 步，获得了 {characterPair?.relationship.joyfulMoments || 0} 次欢乐时刻
-              </p>
+              <p className="text-dark-400 mb-2">{gameOverReason}</p>
+              <p className="text-dark-500 text-sm mb-6">共完成了 {caseCount} 个案例</p>
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => {
                     setIsGameOver(false);
-                    setStepCount(0);
-                    initGame();
+                    setCaseCount(0);
+                    navigate('/lobby');
                   }}
                   className="btn-primary"
                 >
@@ -449,30 +471,18 @@ export default function GamePage() {
             </div>
           </div>
         )}
-      </div>
 
-      {/* 关卡视频播放器 */}
-      {showLevelVideo && (
-        <VideoPlayer
-          videoUrl={`/financial-hunter/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
-          onComplete={() => {
-            setShowLevelVideo(false);
-            if (pendingScenario) {
-              setCurrentScenario(pendingScenario);
-              setPendingScenario(null);
-            }
-          }}
-          onSkip={() => {
-            setShowLevelVideo(false);
-            if (pendingScenario) {
-              setCurrentScenario(pendingScenario);
-              setPendingScenario(null);
-            }
-          }}
-          autoPlay={true}
-          showSkip={true}
-        />
-      )}
+        {/* 关卡视频播放器 */}
+        {showLevelVideo && (
+          <VideoPlayer
+            videoUrl={`/financial-hunter/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
+            onComplete={handleVideoComplete}
+            onSkip={handleVideoComplete}
+            autoPlay={true}
+            showSkip={true}
+          />
+        )}
+      </div>
     </div>
   );
 }
