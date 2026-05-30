@@ -7,10 +7,13 @@ import DialoguePanel from '../components/DialoguePanel';
 import {
   DialogueMessage,
   CaseResult,
+  ThirdPartyCharacter,
   generateCaseIntroduction,
   determineDialogueStructure,
   generateSingleDialogue,
   generateCaseResult,
+  shouldIntroduceThirdParty,
+  generateThirdPartyDialogue,
 } from '../services/dialogueService';
 import * as scenarioService from '../services/scenarioService';
 import * as localService from '../services/localStorage';
@@ -118,9 +121,55 @@ export default function GamePage() {
       setTotalRounds(structure.totalRounds);
       setFirstSpeaker(structure.firstSpeaker);
 
-      // 步骤3：逐轮生成对话（严格交替）
+      // 步骤3：逐轮生成对话（严格交替，可能引入第三方角色）
+      let thirdParty: ThirdPartyCharacter | null = null;
+
       for (let round = 1; round <= structure.totalRounds; round++) {
         if (abortRef.current) return;
+
+        // 检查是否引入第三方角色（AI决定）
+        if (!thirdParty) {
+          const newThirdParty = await shouldIntroduceThirdParty(
+            characterPair,
+            currentScenario,
+            messages,
+            round,
+            structure.totalRounds
+          );
+          if (newThirdParty) {
+            thirdParty = newThirdParty;
+            // 第三方角色发言1-2轮
+            for (let tpRound = 0; tpRound < 2 && round + tpRound <= structure.totalRounds; tpRound++) {
+              const tpMsg: DialogueMessage = {
+                role: 'thirdParty',
+                content: '',
+                thirdParty: thirdParty,
+              };
+              setMessages((prev) => [...prev, tpMsg]);
+              setCurrentRound(round + tpRound);
+
+              for await (const token of generateThirdPartyDialogue(
+                characterPair,
+                currentScenario,
+                thirdParty,
+                messages,
+                round + tpRound,
+                structure.totalRounds
+              )) {
+                if (abortRef.current) return;
+                tpMsg.content += token;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { ...tpMsg };
+                  return updated;
+                });
+              }
+            }
+            // 跳过已使用的轮数
+            round += 1;
+            continue;
+          }
+        }
 
         // 严格交替发言：奇数轮=firstSpeaker，偶数轮=另一方
         const speaker: 'male' | 'female' =

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { DialogueMessage, CaseResult } from '../services/dialogueService';
+import { DialogueMessage, CaseResult, ThirdPartyCharacter, ThirdPartyRole } from '../services/dialogueService';
 import { CharacterPair } from '../types';
 import { EMOTION_ICONS } from '../services/comicService';
 
@@ -13,6 +13,28 @@ interface DialoguePanelProps {
   onExecuteNext: () => void;
   autoScroll?: boolean;
 }
+
+// 第三方角色图标映射
+const THIRD_PARTY_ICONS: Record<ThirdPartyRole, string> = {
+  boss: '👔',
+  colleague: '👥',
+  regulator: '⚖️',
+  peer: '🏢',
+  competitor: '🎯',
+  client: '💼',
+  partner: '🤝',
+};
+
+// 第三方角色颜色映射
+const THIRD_PARTY_COLORS: Record<ThirdPartyRole, string> = {
+  boss: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  colleague: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  regulator: 'bg-red-500/20 text-red-400 border-red-500/30',
+  peer: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  competitor: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  client: 'bg-green-500/20 text-green-400 border-green-500/30',
+  partner: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+};
 
 export default function DialoguePanel({
   messages,
@@ -34,15 +56,16 @@ export default function DialoguePanel({
     }
   }, [messages, autoScroll]);
 
-  const getSpeakerName = (role: string) => {
-    if (role === 'male') return pair?.male.name || '他';
-    if (role === 'female') return pair?.female.name || '她';
+  const getSpeakerName = (msg: DialogueMessage) => {
+    if (msg.role === 'male') return pair?.male.name || '他';
+    if (msg.role === 'female') return pair?.female.name || '她';
+    if (msg.role === 'thirdParty') return msg.thirdParty?.name || '第三方';
     return '旁白';
   };
 
-  const getSpeakerAvatar = (role: string) => {
-    if (role === 'male') return pair?.male.avatarUrl;
-    if (role === 'female') return pair?.female.avatarUrl;
+  const getSpeakerAvatar = (msg: DialogueMessage) => {
+    if (msg.role === 'male') return pair?.male.avatarUrl;
+    if (msg.role === 'female') return pair?.female.avatarUrl;
     return null;
   };
 
@@ -86,8 +109,9 @@ export default function DialoguePanel({
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => {
           const isNarrator = msg.role === 'narrator';
-          const speakerName = getSpeakerName(msg.role);
-          const avatarUrl = getSpeakerAvatar(msg.role);
+          const isThirdParty = msg.role === 'thirdParty';
+          const speakerName = getSpeakerName(msg);
+          const avatarUrl = getSpeakerAvatar(msg);
           const gender = getSpeakerGender(msg.role);
 
           if (isNarrator) {
@@ -104,7 +128,40 @@ export default function DialoguePanel({
             );
           }
 
-          // 角色对话样式
+          // 第三方角色样式
+          if (isThirdParty && msg.thirdParty) {
+            const icon = THIRD_PARTY_ICONS[msg.thirdParty.role];
+            const colorClass = THIRD_PARTY_COLORS[msg.thirdParty.role];
+            return (
+              <div key={index} className="flex justify-center">
+                <div className="flex items-start space-x-3 max-w-[80%]">
+                  {/* 头像 */}
+                  <div className="flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${colorClass} border`}>
+                      {icon}
+                    </div>
+                  </div>
+
+                  {/* 对话气泡 */}
+                  <div className="bg-dark-700/50 border border-dark-600/50 rounded-2xl px-4 py-2.5 rounded-tl-sm">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-xs font-medium text-dark-300">{speakerName}</span>
+                      <span className="text-xs text-dark-500">{msg.thirdParty.title}</span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-dark-200">
+                      {msg.content}
+                      {/* 流式光标 */}
+                      {isStreaming && index === messages.length - 1 && (
+                        <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // 男女角色对话样式
           const isMale = gender === 'male';
           return (
             <div

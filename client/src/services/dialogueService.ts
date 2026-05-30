@@ -6,11 +6,31 @@
 import { streamGLM, callGLM } from './streamService';
 import { CharacterPair, Scenario, EmotionType } from '../types';
 
+// 第三方角色类型
+export type ThirdPartyRole = 
+  | 'boss'           // 上司
+  | 'colleague'      // 其他部门员工
+  | 'regulator'      // 监管部门员工
+  | 'peer'           // 同业员工
+  | 'competitor'     // 竞争对手
+  | 'client'         // 客户
+  | 'partner';       // 合作伙伴
+
+// 第三方角色信息
+export interface ThirdPartyCharacter {
+  id: string;
+  role: ThirdPartyRole;
+  name: string;
+  title: string;
+  description: string;
+}
+
 // 对话消息类型
 export interface DialogueMessage {
-  role: 'male' | 'female' | 'narrator';
+  role: 'male' | 'female' | 'narrator' | 'thirdParty';
   content: string;
   emotion?: EmotionType;
+  thirdParty?: ThirdPartyCharacter;  // 当role为'thirdParty'时使用
 }
 
 // 案例对话结果
@@ -220,4 +240,149 @@ ${dialogueSummary}
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
   ], { temperature: 0.85, maxTokens: 800 });
+}
+
+// ==========================================
+// 步骤5：AI决定是否引入第三方角色
+// ==========================================
+export async function shouldIntroduceThirdParty(
+  pair: CharacterPair,
+  scenario: Scenario,
+  dialogueHistory: DialogueMessage[],
+  roundNumber: number,
+  totalRounds: number
+): Promise<ThirdPartyCharacter | null> {
+  // 前3轮不引入新角色，让男女主角先讨论
+  if (roundNumber <= 3) return null;
+  
+  // 最后3轮不引入新角色，让男女主角做最终决策
+  if (roundNumber >= totalRounds - 2) return null;
+  
+  // 已经有第三方角色在对话中，不再引入
+  const hasThirdParty = dialogueHistory.some(msg => msg.role === 'thirdParty');
+  if (hasThirdParty) return null;
+  
+  // 30%概率引入新角色（由AI决定具体时机和角色）
+  if (Math.random() > 0.3) return null;
+
+  const systemPrompt = `你是金融职场模拟游戏的AI导演。根据当前对话进度和案例情况，决定是否引入第三方角色。
+
+可选角色类型：
+- boss：上司（严厉、权威、关注结果）
+- colleague：其他部门员工（协作、推诿、信息不对称）
+- regulator：监管部门员工（合规、审查、质询）
+- peer：同业员工（竞争、合作、信息交换）
+- competitor：竞争对手（敌意、试探、商业间谍）
+- client：客户（需求、投诉、谈判）
+- partner：合作伙伴（协商、利益分配、风险共担）
+
+请返回JSON格式（如果决定不引入，返回null）：
+{
+  "shouldIntroduce": true,
+  "role": "<boss/colleague/regulator/peer/competitor/client/partner>",
+  "name": "<角色姓名>",
+  "title": "<职位/头衔>",
+  "description": "<简短描述，20-30字>"
+}
+
+或
+{"shouldIntroduce": false}
+
+引入原则：
+- 案例涉及合规问题 → regulator
+- 需要跨部门协作 → colleague
+- 涉及客户投诉 → client
+- 有商业竞争 → competitor/peer
+- 需要高层决策 → boss
+- 需要外部合作 → partner`;
+
+  const historySummary = dialogueHistory.slice(-5).map((msg) => {
+    const name = msg.role === 'male' ? pair.male.name : msg.role === 'female' ? pair.female.name : msg.thirdParty?.name || '旁白';
+    return `${name}：${msg.content.slice(0, 60)}`;
+  }).join('\n');
+
+  const userPrompt = `案例：${scenario.title}
+描述：${scenario.description}
+当前轮数：${roundNumber}/${totalRounds}
+
+最近对话：
+${historySummary}
+
+请决定是否引入第三方角色。`;
+
+  try {
+    const result = await callGLM([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.9);
+
+    if (result) {
+      const match = result.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.shouldIntroduce && parsed.role) {
+          return {
+            id: `third_${Date.now()}`,
+            role: parsed.role,
+            name: parsed.name || '未知',
+            title: parsed.title || '相关人员',
+            description: parsed.description || '',
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to determine third party:', e);
+  }
+
+  return null;
+}
+
+// ==========================================
+// 步骤6：流式生成第三方角色对话
+// ==========================================
+export async function* generateThirdPartyDialogue(
+  pair: CharacterPair,
+  scenario: Scenario,
+  thirdParty: ThirdPartyCharacter,
+  dialogueHistory: DialogueMessage[],
+  roundNumber: number,
+  totalRounds: number
+): AsyncGenerator<string> {
+  const systemPrompt = `你是金融职场模拟游戏的AI角色扮演引擎。你需要扮演第三方角色进行对话。
+
+角色信息：
+- 姓名：${thirdParty.name}
+- 身份：${thirdParty.title}
+- 类型：${thirdParty.role}
+- 描述：${thirdParty.description}
+
+主角信息：
+- ${pair.male.name}（男）：${pair.male.career.当前职位}
+- ${pair.female.name}（女）：${pair.female.career.当前职位}
+
+当前案例：${scenario.title}
+案例描述：${scenario.description}
+
+对话进度：第${roundNumber}轮/共${totalRounds}轮
+
+重要规则：
+1. 直接输出${thirdParty.name}说的话，不要加"${thirdParty.name}："前缀
+2. 每轮对话30-80字
+3. 说话风格要符合角色身份（${thirdParty.role}）
+4. 第三方角色只出现1-2轮，推动剧情发展
+5. 对话要有真实感，体现角色的立场和利益
+6. 不要输出旁白、动作描写，只输出对话内容`;
+
+  const historySummary = dialogueHistory.slice(-6).map((msg) => {
+    const name = msg.role === 'male' ? pair.male.name : msg.role === 'female' ? pair.female.name : msg.thirdParty?.name || '旁白';
+    return `${name}：${msg.content.slice(0, 60)}`;
+  }).join('\n');
+
+  const userPrompt = `${historySummary ? `之前的对话：\n${historySummary}\n\n` : ''}请${thirdParty.name}（${thirdParty.title}）发言（第${roundNumber}轮）。直接说出对话内容。`;
+
+  yield* streamGLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], { temperature: 0.9, maxTokens: 200 });
 }
