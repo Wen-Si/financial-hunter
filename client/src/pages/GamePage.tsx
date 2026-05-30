@@ -47,6 +47,13 @@ export default function GamePage() {
   const streamingRef = useRef(false);
   const abortRef = useRef(false);
 
+  // 自动运行状态
+  const [isAutoRun, setIsAutoRun] = useState(false);
+  const autoRunRef = useRef(false);
+
+  // 已使用场景记录（确保不重复）
+  const usedScenariosRef = useRef<Set<string>>(new Set());
+
   // 初始化游戏
   useEffect(() => {
     initGame();
@@ -80,16 +87,40 @@ export default function GamePage() {
     }
   };
 
-  // 选择场景
+  // 选择场景（确保不重复）
   const selectScenario = (pair: CharacterPair): Scenario | null => {
     const history = localService.getGameHistory(pair.male.id);
-    const scenario = scenarioService.selectRelevantScenario(
-      pair.male.attributes,
-      pair.male.status,
-      pair.male.career,
-      history
+
+    // 获取所有可用场景
+    const allScenarios = scenarioService.scenarios;
+
+    // 过滤掉已使用的场景
+    const availableScenarios = allScenarios.filter(
+      s => !usedScenariosRef.current.has(s.id)
     );
-    return scenario || null;
+
+    // 如果所有场景都用过了，重置记录
+    if (availableScenarios.length === 0) {
+      usedScenariosRef.current.clear();
+      // 保留当前场景记录，避免立即重复
+      if (currentScenario) {
+        usedScenariosRef.current.add(currentScenario.id);
+      }
+    }
+
+    // 从可用场景中选择
+    const scenariosToChoose = availableScenarios.length > 0 ? availableScenarios : allScenarios;
+
+    // 随机选择一个场景
+    const randomIndex = Math.floor(Math.random() * scenariosToChoose.length);
+    const selected = scenariosToChoose[randomIndex];
+
+    // 记录已使用
+    if (selected) {
+      usedScenariosRef.current.add(selected.id);
+    }
+
+    return selected || null;
   };
 
   // ==========================================
@@ -213,6 +244,15 @@ export default function GamePage() {
       // 步骤5：应用结果到角色
       applyResult(result);
 
+      // 自动运行模式下，延迟后自动进入下一关
+      if (autoRunRef.current && !isGameOver) {
+        setTimeout(() => {
+          if (autoRunRef.current && !abortRef.current) {
+            handleNextCase();
+          }
+        }, 3000); // 3秒后自动进入下一关
+      }
+
     } catch (err) {
       console.error('Dialogue error:', err);
       setError('对话生成出错，请重试');
@@ -220,7 +260,7 @@ export default function GamePage() {
       streamingRef.current = false;
       setIsStreaming(false);
     }
-  }, [characterPair, currentScenario, messages]);
+  }, [characterPair, currentScenario, messages, isGameOver]);
 
   // 收集流式文本为完整字符串
   const collectStreamText = async (generator: AsyncGenerator<string>): Promise<string> => {
@@ -339,6 +379,11 @@ export default function GamePage() {
   const handleNextCase = async () => {
     if (!characterPair) return;
 
+    // 清除当前结果，准备下一关
+    setCaseResult(null);
+    setMessages([]);
+    setCurrentRound(0);
+
     // 选择下一个场景
     const scenario = selectScenario(characterPair);
     if (scenario) {
@@ -350,6 +395,18 @@ export default function GamePage() {
       setTimeout(() => startCaseDialogue(), 500);
     } else {
       setError('没有更多可用场景了');
+    }
+  };
+
+  // 切换自动运行模式
+  const toggleAutoRun = () => {
+    const newAutoRun = !isAutoRun;
+    setIsAutoRun(newAutoRun);
+    autoRunRef.current = newAutoRun;
+
+    // 如果开启自动运行且当前案例已完成，立即进入下一关
+    if (newAutoRun && caseResult && !isGameOver) {
+      handleNextCase();
     }
   };
 
@@ -482,6 +539,31 @@ export default function GamePage() {
               />
             )}
           </div>
+        </div>
+
+        {/* 底部控制栏 */}
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+          <button
+            onClick={toggleAutoRun}
+            disabled={isGameOver}
+            className={`px-6 py-3 rounded-full font-medium text-sm shadow-lg transition-all flex items-center space-x-2 ${
+              isAutoRun
+                ? 'bg-green-500 hover:bg-green-400 text-white'
+                : 'bg-dark-800 hover:bg-dark-700 text-dark-200 border border-dark-600'
+            } ${isGameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isAutoRun ? (
+              <>
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                <span>🤖 自动运行中</span>
+              </>
+            ) : (
+              <>
+                <span>▶</span>
+                <span>自动运行</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* 游戏结束弹窗 */}
