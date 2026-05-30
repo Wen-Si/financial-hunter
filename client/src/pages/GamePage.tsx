@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { gameAPI, avatarAPI } from '../services/api';
 import { CharacterPair, Scenario, ComicFrame, EmotionType } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
+import VideoPlayer from '../components/VideoPlayer';
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -10,7 +11,7 @@ export default function GamePage() {
 
   // 角色对状态
   const [characterPair, setCharacterPair] = useState<CharacterPair | null>(null);
-  
+
   // 游戏状态
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -19,17 +20,21 @@ export default function GamePage() {
   const [isGameOver, setIsGameOver] = useState(false);
   const [gameOverReason, setGameOverReason] = useState('');
   const [stepCount, setStepCount] = useState(0);
-  
+
   // 场景状态
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
   const [comicFrames, setComicFrames] = useState<ComicFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
-  
+
   // 行动结果
   const [lastAction, setLastAction] = useState<any>(null);
-  
+
   // 自动运行定时器
   const autoRunTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // 视频播放状态
+  const [showLevelVideo, setShowLevelVideo] = useState(false);
+  const [pendingScenario, setPendingScenario] = useState<Scenario | null>(null);
 
   // 初始化游戏
   useEffect(() => {
@@ -75,10 +80,18 @@ export default function GamePage() {
       const data = res.data;
 
       setLastAction(data);
-      setCurrentScenario(data.nextScenario);
+      setStepCount((prev) => prev + 1);
+
+      // 如果有下一关，先播放视频再显示场景
+      if (data.nextScenario) {
+        setPendingScenario(data.nextScenario);
+        setShowLevelVideo(true);
+      } else {
+        setCurrentScenario(data.nextScenario);
+      }
+
       setComicFrames(data.comicFrames || []);
       setCurrentFrameIndex(0);
-      setStepCount((prev) => prev + 1);
 
       // 更新角色对
       const pairRes = await avatarAPI.getCharacterPair();
@@ -437,6 +450,29 @@ export default function GamePage() {
           </div>
         )}
       </div>
+
+      {/* 关卡视频播放器 */}
+      {showLevelVideo && (
+        <VideoPlayer
+          videoUrl={`/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
+          onComplete={() => {
+            setShowLevelVideo(false);
+            if (pendingScenario) {
+              setCurrentScenario(pendingScenario);
+              setPendingScenario(null);
+            }
+          }}
+          onSkip={() => {
+            setShowLevelVideo(false);
+            if (pendingScenario) {
+              setCurrentScenario(pendingScenario);
+              setPendingScenario(null);
+            }
+          }}
+          autoPlay={true}
+          showSkip={true}
+        />
+      )}
     </div>
   );
 }
