@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { avatarAPI } from '../services/api';
 import { CharacterPair, Scenario, EmotionType } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
-import VideoPlayer from '../components/VideoPlayer';
 import DialoguePanel from '../components/DialoguePanel';
 import {
   DialogueMessage,
@@ -40,9 +39,6 @@ export default function GamePage() {
   const [totalRounds, setTotalRounds] = useState(12);
   const [firstSpeaker, setFirstSpeaker] = useState<'male' | 'female'>('male');
   const [caseResult, setCaseResult] = useState<CaseResult | null>(null);
-
-  // 视频状态
-  const [showLevelVideo, setShowLevelVideo] = useState(false);
 
   // 流式文本缓冲
   const streamingRef = useRef(false);
@@ -122,12 +118,13 @@ export default function GamePage() {
       setTotalRounds(structure.totalRounds);
       setFirstSpeaker(structure.firstSpeaker);
 
-      // 步骤3：逐轮生成对话
+      // 步骤3：逐轮生成对话（严格交替）
       for (let round = 1; round <= structure.totalRounds; round++) {
         if (abortRef.current) return;
 
+        // 严格交替发言：奇数轮=firstSpeaker，偶数轮=另一方
         const speaker: 'male' | 'female' =
-          round === 1
+          round % 2 === 1
             ? structure.firstSpeaker
             : structure.firstSpeaker === 'male'
             ? 'female'
@@ -300,18 +297,11 @@ export default function GamePage() {
       localService.updateAvatar(characterPair.male.id, { currentScenario: scenario.id });
       localService.updateAvatar(characterPair.female.id, { currentScenario: scenario.id });
 
-      // 播放关卡视频
-      setShowLevelVideo(true);
+      // 视频播放已禁用，直接开始对话
+      setTimeout(() => startCaseDialogue(), 500);
     } else {
       setError('没有更多可用场景了');
     }
-  };
-
-  // 视频播放完成
-  const handleVideoComplete = () => {
-    setShowLevelVideo(false);
-    // 视频播放完成后自动开始对话
-    setTimeout(() => startCaseDialogue(), 500);
   };
 
   // 首次加载时自动开始第一个案例的对话
@@ -472,16 +462,6 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* 关卡视频播放器 */}
-        {showLevelVideo && (
-          <VideoPlayer
-            videoUrl={`/financial-hunter/video-level-${Math.floor(Math.random() * 3) + 1}.mp4`}
-            onComplete={handleVideoComplete}
-            onSkip={handleVideoComplete}
-            autoPlay={true}
-            showSkip={true}
-          />
-        )}
       </div>
     </div>
   );

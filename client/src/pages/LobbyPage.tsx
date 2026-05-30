@@ -4,14 +4,12 @@ import { avatarAPI, authAPI } from '../services/api';
 import { CharacterPair } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
 import * as localService from '../services/localStorage';
-import VideoPlayer from '../components/VideoPlayer';
 
 export default function LobbyPage() {
   const navigate = useNavigate();
   const [characterPair, setCharacterPair] = useState<CharacterPair | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [showStartVideo, setShowStartVideo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -54,13 +52,7 @@ export default function LobbyPage() {
   };
 
   const handleStartGame = async (avatarId: string) => {
-    // 显示开始冒险视频
-    setShowStartVideo(true);
-  };
-
-  const handleVideoComplete = () => {
-    setShowStartVideo(false);
-    // 视频播放完成后跳转到游戏页面
+    // 直接跳转到游戏页面（视频播放已禁用）
     if (characterPair) {
       navigate(`/game/${characterPair.male.id}`);
     }
@@ -236,15 +228,6 @@ export default function LobbyPage() {
         )}
       </div>
 
-      {/* 开始冒险视频播放器 */}
-      {showStartVideo && (
-        <VideoPlayer
-          videoUrl="/financial-hunter/video-start.mp4"
-          onComplete={handleVideoComplete}
-          autoPlay={true}
-          showSkip={true}
-        />
-      )}
     </div>
   );
 }
