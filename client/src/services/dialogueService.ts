@@ -144,38 +144,63 @@ export async function* generateSingleDialogue(
     return `${name}：${msg.content.slice(0, 80)}`;
   }).join('\n');
 
-  const systemPrompt = `你是金融职场模拟游戏的AI角色扮演引擎。你需要扮演${speakerInfo.name}进行对话。
+  // 分析当前对话阶段
+  const progressRatio = roundNumber / totalRounds;
+  let phase = '早期分析';
+  if (progressRatio > 0.4) phase = '中期争论';
+  if (progressRatio > 0.7) phase = '后期决策';
 
-角色信息：
+  // 随机决定是否要犯错（20%概率）
+  const shouldMakeMistake = Math.random() < 0.2 && progressRatio < 0.8;
+  const mistakeHint = shouldMakeMistake ? '本轮你可以犯一个错误（判断失误、计算错误、情绪化反应等），让对话更真实。' : '';
+
+  const systemPrompt = `你是金融职场模拟游戏的AI角色扮演引擎。你需要深度扮演${speakerInfo.name}进行对话。
+
+【角色设定】
 - 姓名：${speakerInfo.name}
 - 性别：${speaker === 'male' ? '男' : '女'}
 - 职业：${speakerInfo.career.当前职位}
 - 性格：${speakerInfo.characterDescription}
-- 属性：品格${speakerInfo.attributes.品格}、情商${speakerInfo.attributes.情商}、专业知识${speakerInfo.attributes.专业知识}、人脉${speakerInfo.attributes.人脉}、抗压能力${speakerInfo.attributes.抗压能力}
+- 六维属性：品格${speakerInfo.attributes.品格}、情商${speakerInfo.attributes.情商}、专业知识${speakerInfo.attributes.专业知识}、人脉${speakerInfo.attributes.人脉}、抗压能力${speakerInfo.attributes.抗压能力}、运气${speakerInfo.attributes.运气}
 
-搭档信息：
+【搭档信息】
 - 姓名：${otherInfo.name}
 - 性格：${otherInfo.characterDescription}
+- 你们的关系：和谐度${pair.relationship.harmony}/100，信任度${pair.relationship.trust}/100
 
-当前案例：${scenario.title}
-案例描述：${scenario.description}
+【当前案例】
+- 标题：${scenario.title}
+- 描述：${scenario.description}
+- 难度：${scenario.difficulty}/5
 
-关系状态：
-- 和谐度：${pair.relationship.harmony}/100
+【对话状态】
+- 当前阶段：${phase}（第${roundNumber}轮/共${totalRounds}轮）
 - 当前情绪：${pair.currentEmotion}
 
-对话进度：第${roundNumber}轮/共${totalRounds}轮
+【核心要求 - 必须遵守】
+1. **基于角色属性发言**：高专业知识角色要展现专业分析，高情商角色要体现人际洞察，高品格角色要关注道德底线
+2. **给出具体判断**：不要只说"我觉得"，要说"我认为应该...因为..."，提供具体分析和理由
+3. **可以有失误**：角色不是完美的，可能判断错误、情绪化、计算失误（根据运气属性）
+4. **真实争论**：
+   - 早期：各自提出不同分析角度，可能有分歧
+   - 中期：激烈争论，观点交锋，互相质疑
+   - 后期：可能妥协、坚持己见、或找到折中方案
+5. **情绪真实**：压力大时可能急躁，被质疑时可能 defensive，达成共识时可能欣慰
+6. **直接输出对话内容**，不要加角色名前缀
+7. 每轮30-80字，要有实质内容
+${mistakeHint}`;
 
-重要规则：
-1. 直接输出${speakerInfo.name}说的话，不要加"${speakerInfo.name}："前缀
-2. 每轮对话30-80字
-3. 说话风格要符合角色性格
-4. 早期对话是分析讨论，中期是方案争论，后期是决策和执行
-5. 要体现两人之间的合作、分歧或冲突
-6. 对话要有真实感，像真实职场中的人
-7. 不要输出旁白、动作描写，只输出对话内容`;
+  const userPrompt = `${historySummary ? `【对话历史】\n${historySummary}\n\n` : ''}【当前任务】
+请${speakerInfo.name}基于你的角色属性和当前阶段，对案例"${scenario.title}"发表具体看法。
 
-  const userPrompt = `${historySummary ? `之前的对话：\n${historySummary}\n\n` : ''}请${speakerInfo.name}发言（第${roundNumber}轮，共${totalRounds}轮）。直接说出对话内容。`;
+要求：
+- 如果是早期：提出你的分析和初步判断
+- 如果是中期：回应对方的观点，可以同意、反驳或提出新角度
+- 如果是后期：做出决策或总结
+- 要体现你的性格特点（${speakerInfo.characterDescription}）
+- 可以直接说出你的担忧、犹豫、自信或不确定
+
+直接开始说话：`;
 
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
