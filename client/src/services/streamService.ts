@@ -6,20 +6,25 @@
 const GLM_API_KEY = '7b8a15f57d2941a69fcce60f49f7c6ff.SiMrZjCdyOmdtzLr';
 const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
-// 流式调用GLM API，逐token返回
+// 流式调用GLM API，逐token返回（可控制速度）
 export async function* streamGLM(
   messages: { role: string; content: string }[],
   options: {
     temperature?: number;
     maxTokens?: number;
     model?: string;
+    speedFactor?: number; // 速度因子：1=正常，0.5=慢速（延迟翻倍）
   } = {}
 ): AsyncGenerator<string> {
   const {
     temperature = 0.85,
     maxTokens = 2000,
     model = 'glm-4-flash',
+    speedFactor = 0.5, // 默认降速50%
   } = options;
+
+  const baseDelay = 30; // 基础延迟ms
+  const delay = baseDelay / speedFactor; // speedFactor=0.5 → delay=60ms
 
   const response = await fetch(GLM_API_URL, {
     method: 'POST',
@@ -64,6 +69,8 @@ export async function* streamGLM(
           const json = JSON.parse(trimmed.slice(6));
           const content = json.choices?.[0]?.delta?.content;
           if (content) {
+            // 添加延迟控制流式速度
+            await new Promise(resolve => setTimeout(resolve, delay));
             yield content;
           }
         } catch {
