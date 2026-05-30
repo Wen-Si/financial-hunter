@@ -430,17 +430,20 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-950 py-6 px-4">
+    <div className="min-h-screen bg-dark-950 py-6 px-4 financial-grid">
       <div className="max-w-6xl mx-auto">
-        {/* 顶部导航 */}
-        <div className="flex items-center justify-between mb-6">
+        {/* 顶部导航 - 金融风格 */}
+        <div className="flex items-center justify-between mb-6 financial-card rounded-xl p-4">
           <div className="flex items-center space-x-3">
-            <button onClick={() => navigate('/lobby')} className="text-dark-400 hover:text-white transition-colors">
-              ← 返回
+            <button onClick={() => navigate('/lobby')} className="text-dark-400 hover:text-yellow-400 transition-colors flex items-center">
+              <span className="mr-1">←</span> 返回
             </button>
-            <h1 className="text-xl font-bold text-gold-gradient">金融猎手</h1>
-            <span className="text-xs text-dark-500 bg-dark-800 px-2 py-1 rounded">
-              第 {caseCount + 1} 个案例
+            <div className="h-6 w-px bg-dark-600 mx-2"></div>
+            <h1 className="text-xl font-bold text-gold-gradient flex items-center">
+              <span className="mr-2">📈</span> 金融猎手
+            </h1>
+            <span className="text-xs text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 rounded flex items-center">
+              <span className="mr-1">CASE</span> #{caseCount + 1}
             </span>
           </div>
           <div className="flex items-center space-x-2">
@@ -478,11 +481,21 @@ export default function GamePage() {
                       <p className="text-xs text-dark-400">{characterPair.male.career.当前职位}</p>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <AttributeMini label="金钱" value={characterPair.male.status.金钱} />
-                    <AttributeMini label="心情" value={characterPair.male.status.心情} />
-                    <AttributeMini label="健康" value={characterPair.male.status.健康} />
-                    <AttributeMini label="声望" value={characterPair.male.status.声望} />
+                  {/* 6个核心属性 */}
+                  <div className="space-y-1.5 mb-3">
+                    <AttributeBar label="品格" value={characterPair.male.attributes.品格} color="purple" icon="⚖️" />
+                    <AttributeBar label="情商" value={characterPair.male.attributes.情商} color="pink" icon="💬" />
+                    <AttributeBar label="专业知识" value={characterPair.male.attributes.专业知识} color="blue" icon="📚" />
+                    <AttributeBar label="人脉" value={characterPair.male.attributes.人脉} color="green" icon="🌐" />
+                    <AttributeBar label="抗压能力" value={characterPair.male.attributes.抗压能力} color="orange" icon="💪" />
+                    <AttributeBar label="运气" value={characterPair.male.attributes.运气} color="yellow" icon="🍀" />
+                  </div>
+                  {/* 4个状态属性 */}
+                  <div className="pt-3 border-t border-dark-700/50 space-y-1.5">
+                    <StatusBar label="金钱" value={characterPair.male.status.金钱} icon="💰" />
+                    <StatusBar label="心情" value={characterPair.male.status.心情} icon="😊" />
+                    <StatusBar label="健康" value={characterPair.male.status.健康} icon="❤️" />
+                    <StatusBar label="声望" value={characterPair.male.status.声望} icon="⭐" />
                   </div>
                 </div>
 
@@ -499,11 +512,21 @@ export default function GamePage() {
                       <p className="text-xs text-dark-400">{characterPair.female.career.当前职位}</p>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <AttributeMini label="金钱" value={characterPair.female.status.金钱} />
-                    <AttributeMini label="心情" value={characterPair.female.status.心情} />
-                    <AttributeMini label="健康" value={characterPair.female.status.健康} />
-                    <AttributeMini label="声望" value={characterPair.female.status.声望} />
+                  {/* 6个核心属性 */}
+                  <div className="space-y-1.5 mb-3">
+                    <AttributeBar label="品格" value={characterPair.female.attributes.品格} color="purple" icon="⚖️" />
+                    <AttributeBar label="情商" value={characterPair.female.attributes.情商} color="pink" icon="💬" />
+                    <AttributeBar label="专业知识" value={characterPair.female.attributes.专业知识} color="blue" icon="📚" />
+                    <AttributeBar label="人脉" value={characterPair.female.attributes.人脉} color="green" icon="🌐" />
+                    <AttributeBar label="抗压能力" value={characterPair.female.attributes.抗压能力} color="orange" icon="💪" />
+                    <AttributeBar label="运气" value={characterPair.female.attributes.运气} color="yellow" icon="🍀" />
+                  </div>
+                  {/* 4个状态属性 */}
+                  <div className="pt-3 border-t border-dark-700/50 space-y-1.5">
+                    <StatusBar label="金钱" value={characterPair.female.status.金钱} icon="💰" />
+                    <StatusBar label="心情" value={characterPair.female.status.心情} icon="😊" />
+                    <StatusBar label="健康" value={characterPair.female.status.健康} icon="❤️" />
+                    <StatusBar label="声望" value={characterPair.female.status.声望} icon="⭐" />
                   </div>
                 </div>
 
@@ -598,19 +621,54 @@ export default function GamePage() {
   );
 }
 
-// 迷你属性条
-function AttributeMini({ label, value }: { label: string; value: number }) {
-  const isLow = value < 30;
+// 6个核心属性条（带颜色和图标）
+function AttributeBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
+  const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
+    purple: { bg: 'bg-purple-500/10', text: 'text-purple-400', bar: 'bg-purple-500' },
+    pink: { bg: 'bg-pink-500/10', text: 'text-pink-400', bar: 'bg-pink-500' },
+    blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', bar: 'bg-blue-500' },
+    green: { bg: 'bg-green-500/10', text: 'text-green-400', bar: 'bg-green-500' },
+    orange: { bg: 'bg-orange-500/10', text: 'text-orange-400', bar: 'bg-orange-500' },
+    yellow: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', bar: 'bg-yellow-500' },
+  };
+  const colors = colorMap[color] || colorMap.blue;
+  const percentage = Math.min(100, (value / 100) * 100);
+
   return (
     <div className="flex items-center space-x-2">
-      <span className="text-xs text-dark-500 w-8">{label}</span>
-      <div className="flex-1 attribute-bar">
+      <span className={`text-xs ${colors.text} w-5`}>{icon}</span>
+      <span className="text-xs text-dark-400 w-14">{label}</span>
+      <div className="flex-1 h-1.5 bg-dark-800 rounded-full overflow-hidden">
         <div
-          className={`attribute-bar-fill ${isLow ? 'bg-red-500' : 'bg-green-500'}`}
-          style={{ width: `${Math.min(100, value)}%` }}
+          className={`h-full ${colors.bar} rounded-full transition-all duration-500`}
+          style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className={`text-xs w-6 text-right ${isLow ? 'text-red-400' : 'text-dark-400'}`}>
+      <span className={`text-xs w-8 text-right ${colors.text} font-medium`}>{value}</span>
+    </div>
+  );
+}
+
+// 4个状态属性条（金融风格）
+function StatusBar({ label, value, icon }: { label: string; value: number; icon: string }) {
+  const isLow = value < 30;
+  const isHigh = value > 70;
+
+  return (
+    <div className="flex items-center space-x-2">
+      <span className="text-xs text-dark-500 w-5">{icon}</span>
+      <span className="text-xs text-dark-400 w-14">{label}</span>
+      <div className="flex-1 h-1.5 bg-dark-800 rounded-full overflow-hidden border border-dark-700/50">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${
+            isLow ? 'bg-red-500' : isHigh ? 'bg-green-500' : 'bg-yellow-500'
+          }`}
+          style={{ width: `${Math.min(100, (value / 100) * 100)}%` }}
+        />
+      </div>
+      <span className={`text-xs w-8 text-right font-medium ${
+        isLow ? 'text-red-400' : isHigh ? 'text-green-400' : 'text-yellow-400'
+      }`}>
         {value}
       </span>
     </div>

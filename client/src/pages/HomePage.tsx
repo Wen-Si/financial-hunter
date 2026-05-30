@@ -116,7 +116,7 @@ const HomePage: React.FC = () => {
         {/* 统计数据 */}
         <div className="flex items-center gap-8 sm:gap-12 mt-16 animate-slide-in">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gold-gradient">50+</div>
+            <div className="text-2xl font-bold text-gold-gradient">1000+</div>
             <div className="text-xs text-dark-400 mt-1">金融场景</div>
           </div>
           <div className="w-px h-8 bg-dark-700" />
