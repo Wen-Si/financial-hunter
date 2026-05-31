@@ -199,12 +199,20 @@ export function createCharacterPair(
     声望: 30,
   };
 
+  // 随机选择男性头像（6个备选）
+  const maleAvatarIndex = Math.floor(Math.random() * 6) + 1;
+  const maleAvatarUrl = `/financial-hunter/avatar-male-${maleAvatarIndex}.png`;
+
+  // 随机选择女性头像（6个备选）
+  const femaleAvatarIndex = Math.floor(Math.random() * 6) + 1;
+  const femaleAvatarUrl = `/financial-hunter/avatar-female-${femaleAvatarIndex}.png`;
+
   const maleAvatar: Avatar = {
     id: generateId(),
     userId,
     name: maleName || '男主角',
     characterDescription: maleDescription,
-    avatarUrl: generateAvatar(`${userId}-male-${Date.now()}`),
+    avatarUrl: maleAvatarUrl,
     gender: 'male' as Gender,
     attributes: { ...defaultAttributes },
     career: maleCareer || { ...defaultCareer },
@@ -220,7 +228,7 @@ export function createCharacterPair(
     userId,
     name: femaleName || '女主角',
     characterDescription: femaleDescription,
-    avatarUrl: generateAvatar(`${userId}-female-${Date.now()}`),
+    avatarUrl: femaleAvatarUrl,
     gender: 'female' as Gender,
     attributes: { ...defaultAttributes },
     career: femaleCareer || { ...defaultCareer },
