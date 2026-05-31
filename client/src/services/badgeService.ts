@@ -31,8 +31,8 @@ export const BADGES: Badge[] = [
     icon: '🥈',
     color: 'text-slate-300',
     bgColor: 'bg-slate-400/20',
-    requiredCases: 15,
-    description: '顺利通过15关',
+    requiredCases: 13,
+    description: '顺利通过13关',
   },
   {
     id: 'gold',
@@ -40,8 +40,8 @@ export const BADGES: Badge[] = [
     icon: '🥇',
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/20',
-    requiredCases: 35,
-    description: '顺利通过35关',
+    requiredCases: 30,
+    description: '顺利通过30关',
   },
   {
     id: 'platinum',
@@ -49,8 +49,8 @@ export const BADGES: Badge[] = [
     icon: '💎',
     color: 'text-cyan-300',
     bgColor: 'bg-cyan-500/20',
-    requiredCases: 60,
-    description: '顺利通过60关',
+    requiredCases: 50,
+    description: '顺利通过50关',
   },
   {
     id: 'diamond',
@@ -58,8 +58,8 @@ export const BADGES: Badge[] = [
     icon: '👑',
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/20',
-    requiredCases: 100,
-    description: '顺利通过100关',
+    requiredCases: 80,
+    description: '顺利通过80关',
   },
 ];
 
