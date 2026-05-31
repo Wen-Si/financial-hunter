@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { avatarAPI } from '../services/api';
+import AvatarUpload from '../components/AvatarUpload';
 
 export default function CreateAvatarPage() {
   const navigate = useNavigate();
@@ -10,10 +11,12 @@ export default function CreateAvatarPage() {
   // 男性角色
   const [maleName, setMaleName] = useState('');
   const [maleDescription, setMaleDescription] = useState('');
+  const [maleAvatar, setMaleAvatar] = useState<string | null>(null);
 
   // 女性角色
   const [femaleName, setFemaleName] = useState('');
   const [femaleDescription, setFemaleDescription] = useState('');
+  const [femaleAvatar, setFemaleAvatar] = useState<string | null>(null);
 
   // 快速填充示例
   const fillMaleExample = () => {
@@ -46,7 +49,9 @@ export default function CreateAvatarPage() {
         maleName.trim(),
         femaleName.trim(),
         maleDescription.trim(),
-        femaleDescription.trim()
+        femaleDescription.trim(),
+        maleAvatar,
+        femaleAvatar
       );
       navigate('/lobby');
     } catch (err) {
@@ -82,9 +87,16 @@ export default function CreateAvatarPage() {
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* 男性角色 */}
             <div className="glass rounded-xl p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <span className="text-3xl">👨</span>
-                <h2 className="text-xl font-bold text-white">男性角色</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">👨</span>
+                  <h2 className="text-xl font-bold text-white">男性角色</h2>
+                </div>
+                <AvatarUpload
+                  gender="male"
+                  onUpload={setMaleAvatar}
+                  currentAvatar={maleAvatar}
+                />
               </div>
 
               <div className="space-y-4">
@@ -130,9 +142,16 @@ export default function CreateAvatarPage() {
 
             {/* 女性角色 */}
             <div className="glass rounded-xl p-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <span className="text-3xl">👩</span>
-                <h2 className="text-xl font-bold text-white">女性角色</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl">👩</span>
+                  <h2 className="text-xl font-bold text-white">女性角色</h2>
+                </div>
+                <AvatarUpload
+                  gender="female"
+                  onUpload={setFemaleAvatar}
+                  currentAvatar={femaleAvatar}
+                />
               </div>
 
               <div className="space-y-4">

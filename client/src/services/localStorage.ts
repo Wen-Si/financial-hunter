@@ -174,7 +174,9 @@ export function createCharacterPair(
   maleName: string,
   femaleName: string,
   maleCareer?: Career,
-  femaleCareer?: Career
+  femaleCareer?: Career,
+  maleAvatarUrl?: string | null,
+  femaleAvatarUrl?: string | null
 ): { message: string; characterPair: CharacterPair } {
   const defaultAttributes: AvatarAttributes = {
     品格: 50,
@@ -199,20 +201,18 @@ export function createCharacterPair(
     声望: 30,
   };
 
-  // 随机选择男性头像（6个备选）
-  const maleAvatarIndex = Math.floor(Math.random() * 6) + 1;
-  const maleAvatarUrl = `/financial-hunter/avatar-male-${maleAvatarIndex}.png`;
+  // 使用自定义头像或随机选择男性头像（6个备选）
+  const finalMaleAvatarUrl = maleAvatarUrl || `/financial-hunter/avatar-male-${Math.floor(Math.random() * 6) + 1}.png`;
 
-  // 随机选择女性头像（6个备选）
-  const femaleAvatarIndex = Math.floor(Math.random() * 6) + 1;
-  const femaleAvatarUrl = `/financial-hunter/avatar-female-${femaleAvatarIndex}.png`;
+  // 使用自定义头像或随机选择女性头像（6个备选）
+  const finalFemaleAvatarUrl = femaleAvatarUrl || `/financial-hunter/avatar-female-${Math.floor(Math.random() * 6) + 1}.png`;
 
   const maleAvatar: Avatar = {
     id: generateId(),
     userId,
     name: maleName || '男主角',
     characterDescription: maleDescription,
-    avatarUrl: maleAvatarUrl,
+    avatarUrl: finalMaleAvatarUrl,
     gender: 'male' as Gender,
     attributes: { ...defaultAttributes },
     career: maleCareer || { ...defaultCareer },
@@ -228,7 +228,7 @@ export function createCharacterPair(
     userId,
     name: femaleName || '女主角',
     characterDescription: femaleDescription,
-    avatarUrl: femaleAvatarUrl,
+    avatarUrl: finalFemaleAvatarUrl,
     gender: 'female' as Gender,
     attributes: { ...defaultAttributes },
     career: femaleCareer || { ...defaultCareer },

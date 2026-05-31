@@ -75,7 +75,9 @@ export const avatarAPI = {
     maleName: string,
     femaleName: string,
     maleDescription: string,
-    femaleDescription: string
+    femaleDescription: string,
+    maleAvatarUrl?: string | null,
+    femaleAvatarUrl?: string | null
   ): Promise<{ data: { message: string; characterPair: CharacterPair } }> => {
     const user = localService.getCurrentUser();
     if (!user) return Promise.reject(new Error('未登录'));
@@ -96,7 +98,9 @@ export const avatarAPI = {
         maleName,
         femaleName,
         maleParsed.career,
-        femaleParsed.career
+        femaleParsed.career,
+        maleAvatarUrl,
+        femaleAvatarUrl
       );
       return { data: result };
     });

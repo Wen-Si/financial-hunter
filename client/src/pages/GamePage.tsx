@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { avatarAPI } from '../services/api';
 import { CharacterPair, Scenario, EmotionType } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
+import { getCurrentBadge, getNextBadge, getBadgeProgress, Badge } from '../services/badgeService';
 import DialoguePanel from '../components/DialoguePanel';
 import CaseTransition from '../components/CaseTransition';
 import {
@@ -456,6 +457,8 @@ export default function GamePage() {
             </span>
           </div>
           <div className="flex items-center space-x-3">
+            {/* 勋章显示 */}
+            <BadgeDisplay completedCases={caseCount} />
             {characterPair && (
               <span className={`text-sm ${EMOTION_COLORS[characterPair.currentEmotion]}`}>
                 {EMOTION_ICONS[characterPair.currentEmotion]} {EMOTION_LABELS[characterPair.currentEmotion]}
@@ -683,6 +686,38 @@ function StatusBar({ label, value, icon }: { label: string; value: number; icon:
         <div className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-red-500' : isHigh ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${Math.min(100, (value / 100) * 100)}%` }} />
       </div>
       <span className={`text-xs w-6 text-right font-medium ${isLow ? 'text-red-400' : isHigh ? 'text-green-400' : 'text-yellow-400'}`}>{value}</span>
+    </div>
+  );
+}
+
+// 勋章显示组件
+function BadgeDisplay({ completedCases }: { completedCases: number }) {
+  const currentBadge = getCurrentBadge(completedCases);
+  const nextBadge = getNextBadge(completedCases);
+  const progress = getBadgeProgress(completedCases);
+
+  if (!currentBadge && !nextBadge) return null;
+
+  return (
+    <div className="flex items-center space-x-2">
+      {currentBadge ? (
+        <div className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg ${currentBadge.bgColor} border border-${currentBadge.color.split('-')[1]}-500/30`}>
+          <span className="text-base">{currentBadge.icon}</span>
+          <span className={`text-xs font-medium ${currentBadge.color}`}>{currentBadge.name}</span>
+        </div>
+      ) : (
+        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-dark-800/50 border border-dark-600">
+          <span className="text-base">🏅</span>
+          <span className="text-xs text-dark-400">未获得勋章</span>
+        </div>
+      )}
+      
+      {nextBadge && (
+        <div className="hidden sm:flex items-center space-x-1 text-xs text-dark-500">
+          <span>→</span>
+          <span>{nextBadge.requiredCases - completedCases}关后{nextBadge.name}</span>
+        </div>
+      )}
     </div>
   );
 }
