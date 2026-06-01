@@ -76,14 +76,19 @@ export default function CaseTransition({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 relative" style={{ overflow: 'hidden' }}>
       {/* 背景图片 */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/financial-hunter/bg-transition.jpg)' }}
+        className="absolute inset-0"
+        style={{ 
+          backgroundImage: 'url(/financial-hunter/bg-transition.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
       {/* 遮罩层 */}
-      <div className="absolute inset-0 bg-dark-950/70" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(2, 6, 23, 0.75)' }} />
       
       <div className="max-w-3xl w-full relative z-10">
         {/* 顶部标题 */}

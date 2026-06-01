@@ -483,14 +483,19 @@ export default function GamePage() {
   // 对话/结果页面 - 新布局
   // ==========================================
   return (
-    <div className="min-h-screen py-4 px-4 relative overflow-hidden">
+    <div className="min-h-screen py-4 px-4 relative" style={{ overflow: 'hidden' }}>
       {/* 背景图片 */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/financial-hunter/bg-game.jpg)' }}
+        className="absolute inset-0"
+        style={{ 
+          backgroundImage: 'url(/financial-hunter/bg-game.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
       {/* 遮罩层 */}
-      <div className="absolute inset-0 bg-dark-950/70" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(2, 6, 23, 0.75)' }} />
       
       <div className="max-w-7xl mx-auto relative z-10">
         {/* 顶部导航 */}

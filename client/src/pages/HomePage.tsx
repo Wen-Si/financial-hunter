@@ -56,11 +56,16 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* 背景图片 */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/financial-hunter/bg-login.jpg)' }}
+        className="absolute inset-0"
+        style={{ 
+          backgroundImage: 'url(/financial-hunter/bg-login.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       />
       {/* 遮罩层 */}
-      <div className="absolute inset-0 bg-dark-950/70" />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(2, 6, 23, 0.75)' }} />
       
       {/* 背景装饰元素 */}
       <div className="absolute inset-0 pointer-events-none">
