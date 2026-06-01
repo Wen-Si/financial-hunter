@@ -6,6 +6,8 @@ import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comic
 import { getCurrentBadge, getNextBadge, getBadgeProgress, Badge } from '../services/badgeService';
 import DialoguePanel from '../components/DialoguePanel';
 import CaseTransition from '../components/CaseTransition';
+import CaseSuccess from '../components/CaseSuccess';
+import CaseFailure from '../components/CaseFailure';
 import {
   DialogueMessage,
   CaseResult,
@@ -20,7 +22,7 @@ import * as scenarioService from '../services/scenarioService';
 import * as localService from '../services/localStorage';
 
 // 游戏阶段
-type GamePhase = 'transition' | 'dialogue' | 'result';
+type GamePhase = 'transition' | 'dialogue' | 'success' | 'failure' | 'result';
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -349,10 +351,14 @@ export default function GamePage() {
     setCharacterPair(pair);
     setCaseCount((prev) => prev + 1);
 
+    // 检查是否通关失败（任一状态值耗尽）
     if (maleStatus.金钱 <= 0 || maleStatus.健康 <= 0 || maleStatus.声望 <= 0 || maleStatus.心情 <= 0 ||
         femaleStatus.金钱 <= 0 || femaleStatus.健康 <= 0 || femaleStatus.声望 <= 0 || femaleStatus.心情 <= 0) {
-      setIsGameOver(true);
+      setPhase('failure');
       setGameOverReason('任一角色的状态值耗尽了！');
+    } else {
+      // 通关成功
+      setPhase('success');
     }
   };
 
@@ -433,6 +439,43 @@ export default function GamePage() {
           </button>
         </div>
       </>
+    );
+  }
+
+  // ==========================================
+  // 通关成功页面
+  // ==========================================
+  if (phase === 'success' && caseResult && characterPair) {
+    return (
+      <CaseSuccess
+        caseNumber={caseCount}
+        result={caseResult}
+        pair={characterPair}
+        onNext={handleNextCase}
+        onBack={() => navigate('/lobby')}
+        autoRun={isAutoRun}
+      />
+    );
+  }
+
+  // ==========================================
+  // 通关失败页面
+  // ==========================================
+  if (phase === 'failure' && characterPair) {
+    return (
+      <CaseFailure
+        caseNumber={caseCount}
+        pair={characterPair}
+        failureReason={gameOverReason}
+        onRetry={() => {
+          // 重置当前关卡的对话，重新挑战
+          setPhase('dialogue');
+          setMessages([]);
+          setCurrentRound(0);
+          startCaseDialogue();
+        }}
+        onBack={() => navigate('/lobby')}
+      />
     );
   }
 
