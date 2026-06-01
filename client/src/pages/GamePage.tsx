@@ -483,8 +483,16 @@ export default function GamePage() {
   // 对话/结果页面 - 新布局
   // ==========================================
   return (
-    <div className="min-h-screen bg-dark-950 py-4 px-4 financial-grid">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen py-4 px-4 relative overflow-hidden">
+      {/* 背景图片 */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/financial-hunter/bg-game.jpg)' }}
+      />
+      {/* 遮罩层 */}
+      <div className="absolute inset-0 bg-dark-950/70" />
+      
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* 顶部导航 */}
         <div className="flex items-center justify-between mb-4 financial-card rounded-xl p-3">
           <div className="flex items-center space-x-3">
