@@ -237,18 +237,17 @@ export default function GamePage() {
 
       const result = parseCaseResult(resultText);
       setCaseResult(result);
-      setPhase('result');
 
-      // 步骤4：应用结果到角色
-      applyResult(result);
+      // 步骤4：应用结果到角色（会设置phase为'success'或保持'result'）
+      const isSuccess = applyResult(result);
 
-      // 自动运行模式下，延迟后自动进入下一关
-      if (autoRunRef.current && !isGameOver) {
+      // 自动运行模式下，延迟后自动进入下一关（只在通关成功时）
+      if (autoRunRef.current && isSuccess) {
         setTimeout(() => {
           if (autoRunRef.current && !abortRef.current) {
             handleNextCase();
           }
-        }, 3000);
+        }, 8000); // 给玩家8秒时间查看成功页面和AI点评
       }
 
     } catch (err) {
@@ -296,8 +295,8 @@ export default function GamePage() {
     };
   };
 
-  const applyResult = (result: CaseResult) => {
-    if (!characterPair) return;
+  const applyResult = (result: CaseResult): boolean => {
+    if (!characterPair) return false;
     const pair = { ...characterPair };
 
     const maleAttrs = { ...pair.male.attributes };
@@ -362,9 +361,11 @@ export default function GamePage() {
         femaleStatus.金钱 <= 0 || femaleStatus.健康 <= 0 || femaleStatus.声望 <= 0 || femaleStatus.心情 <= 0) {
       setPhase('failure');
       setGameOverReason('任一角色的状态值耗尽了！');
+      return false;
     } else {
       // 通关成功
       setPhase('success');
+      return true;
     }
   };
 
