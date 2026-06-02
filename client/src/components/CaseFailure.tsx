@@ -1,46 +1,15 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { CharacterPair, Scenario } from '../types';
-import { DialogueMessage, generateFailureAnalysis } from '../services/dialogueService';
+import React from 'react';
+import { CharacterPair } from '../types';
 
 interface CaseFailureProps {
   caseNumber: number;
   pair: CharacterPair;
-  scenario: Scenario;
-  messages: DialogueMessage[];
   failureReason: string;
   onRetry: () => void;
   onBack: () => void;
 }
 
-export default function CaseFailure({ caseNumber, pair, scenario, messages, failureReason, onRetry, onBack }: CaseFailureProps) {
-  const [analysis, setAnalysis] = useState('');
-  const [isStreaming, setIsStreaming] = useState(true);
-  const abortRef = useRef(false);
-
-  // AI生成失败剖析
-  useEffect(() => {
-    abortRef.current = false;
-    setIsStreaming(true);
-
-    const streamAnalysis = async () => {
-      try {
-        for await (const token of generateFailureAnalysis(pair, scenario, messages, failureReason)) {
-          if (abortRef.current) return;
-          setAnalysis(prev => prev + token);
-        }
-      } catch (err) {
-        console.error('Analysis stream error:', err);
-      }
-      setIsStreaming(false);
-    };
-
-    streamAnalysis();
-
-    return () => {
-      abortRef.current = true;
-    };
-  }, [pair, scenario, messages, failureReason]);
-
+export default function CaseFailure({ caseNumber, pair, failureReason, onRetry, onBack }: CaseFailureProps) {
   return (
     <div className="min-h-screen bg-dark-950 py-6 px-4 financial-grid flex items-center justify-center">
       <div className="max-w-2xl w-full">
@@ -114,22 +83,11 @@ export default function CaseFailure({ caseNumber, pair, scenario, messages, fail
           </div>
         </div>
 
-        {/* AI失败剖析 */}
-        <div className="glass rounded-xl p-4 mb-6 border-red-500/20">
-          <div className="flex items-center space-x-2 mb-3">
-            <span className="text-lg">🔍</span>
-            <h3 className="text-sm font-medium text-red-400">AI分析师深度剖析</h3>
-            {isStreaming && (
-              <span className="flex space-x-1">
-                <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-red-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-              </span>
-            )}
-          </div>
-          <div className="text-sm text-dark-200 leading-relaxed whitespace-pre-wrap">
-            {analysis || '正在生成深度剖析...'}
-          </div>
+        {/* 鼓励文字 */}
+        <div className="text-center mb-6">
+          <p className="text-dark-400 text-sm">
+            别灰心！调整策略，重新挑战这一关吧！
+          </p>
         </div>
 
         {/* 按钮 */}

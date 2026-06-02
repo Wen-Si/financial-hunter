@@ -57,6 +57,7 @@ export default function DialoguePanel({
   }, [messages, autoScroll]);
 
   const getSpeakerName = (msg: DialogueMessage) => {
+    if (msg.role === 'ai_review') return '🤖 AI点评师';
     if (msg.role === 'male') return pair?.male.name || '他';
     if (msg.role === 'female') return pair?.female.name || '她';
     if (msg.role === 'thirdParty') return msg.thirdParty?.name || '第三方';
@@ -110,6 +111,7 @@ export default function DialoguePanel({
         {messages.map((msg, index) => {
           const isNarrator = msg.role === 'narrator';
           const isThirdParty = msg.role === 'thirdParty';
+          const isAiReview = msg.role === 'ai_review';
           const speakerName = getSpeakerName(msg);
           const avatarUrl = getSpeakerAvatar(msg);
           const gender = getSpeakerGender(msg.role);
@@ -123,6 +125,27 @@ export default function DialoguePanel({
                     <span className="text-yellow-500 text-sm mt-0.5">📖</span>
                     <p className="text-dark-300 text-sm leading-relaxed">{msg.content}</p>
                   </div>
+                </div>
+              </div>
+            );
+          }
+
+          // AI点评样式
+          if (isAiReview) {
+            return (
+              <div key={index} className="flex justify-center">
+                <div className="max-w-2xl w-full bg-gradient-to-br from-yellow-500/10 to-amber-500/5 border border-yellow-500/30 rounded-xl px-5 py-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <span className="text-lg">🤖</span>
+                    <h3 className="text-sm font-medium text-yellow-400">AI点评师总结</h3>
+                  </div>
+                  <p className="text-sm text-dark-200 leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                    {/* 流式光标 */}
+                    {isStreaming && index === messages.length - 1 && (
+                      <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
+                    )}
+                  </p>
                 </div>
               </div>
             );

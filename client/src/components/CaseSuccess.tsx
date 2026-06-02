@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { CaseResult, DialogueMessage, generateSuccessReview } from '../services/dialogueService';
-import { CharacterPair, Scenario } from '../types';
+import React, { useEffect, useState } from 'react';
+import { CaseResult } from '../services/dialogueService';
+import { CharacterPair } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS } from '../services/comicService';
 import { getCurrentBadge, getNextBadge, getBadgeProgress } from '../services/badgeService';
 
@@ -8,45 +8,16 @@ interface CaseSuccessProps {
   caseNumber: number;
   result: CaseResult;
   pair: CharacterPair;
-  scenario: Scenario;
-  messages: DialogueMessage[];
   onNext: () => void;
   onBack: () => void;
   autoRun?: boolean;
 }
 
-export default function CaseSuccess({ caseNumber, result, pair, scenario, messages, onNext, onBack, autoRun }: CaseSuccessProps) {
-  const [countdown, setCountdown] = useState(autoRun ? 3 : 0);
-  const [review, setReview] = useState('');
-  const [isStreaming, setIsStreaming] = useState(true);
-  const abortRef = useRef(false);
+export default function CaseSuccess({ caseNumber, result, pair, onNext, onBack, autoRun }: CaseSuccessProps) {
+  const [countdown, setCountdown] = useState(autoRun ? 5 : 0);
   const currentBadge = getCurrentBadge(caseNumber);
   const nextBadge = getNextBadge(caseNumber);
   const progress = getBadgeProgress(caseNumber);
-
-  // AI生成总结点评
-  useEffect(() => {
-    abortRef.current = false;
-    setIsStreaming(true);
-
-    const streamReview = async () => {
-      try {
-        for await (const token of generateSuccessReview(pair, scenario, messages, result)) {
-          if (abortRef.current) return;
-          setReview(prev => prev + token);
-        }
-      } catch (err) {
-        console.error('Review stream error:', err);
-      }
-      setIsStreaming(false);
-    };
-
-    streamReview();
-
-    return () => {
-      abortRef.current = true;
-    };
-  }, [pair, scenario, messages, result]);
 
   // 自动运行倒计时
   useEffect(() => {
@@ -106,11 +77,11 @@ export default function CaseSuccess({ caseNumber, result, pair, scenario, messag
                 <span className="text-sm font-medium text-white">{pair.male.name}</span>
               </div>
               <div className="space-y-1.5">
-                {Object.entries(result.attributeChanges.male).map(([key, value]) => (
+                {Object.entries(result.attributesChange).map(([key, val]) => (
                   <div key={key} className="flex items-center justify-between text-xs">
                     <span className="text-dark-400">{key}</span>
-                    <span className={`font-medium ${value > 0 ? 'text-green-400' : value < 0 ? 'text-red-400' : 'text-dark-500'}`}>
-                      {value > 0 ? '+' : ''}{value}
+                    <span className={`font-medium ${(val as number) > 0 ? 'text-green-400' : (val as number) < 0 ? 'text-red-400' : 'text-dark-500'}`}>
+                      {(val as number) > 0 ? '+' : ''}{val}
                     </span>
                   </div>
                 ))}
@@ -130,11 +101,11 @@ export default function CaseSuccess({ caseNumber, result, pair, scenario, messag
                 <span className="text-sm font-medium text-white">{pair.female.name}</span>
               </div>
               <div className="space-y-1.5">
-                {Object.entries(result.attributeChanges.female).map(([key, value]) => (
+                {Object.entries(result.attributesChange).map(([key, val]) => (
                   <div key={key} className="flex items-center justify-between text-xs">
                     <span className="text-dark-400">{key}</span>
-                    <span className={`font-medium ${value > 0 ? 'text-green-400' : value < 0 ? 'text-red-400' : 'text-dark-500'}`}>
-                      {value > 0 ? '+' : ''}{value}
+                    <span className={`font-medium ${(val as number) > 0 ? 'text-green-400' : (val as number) < 0 ? 'text-red-400' : 'text-dark-500'}`}>
+                      {Math.floor((val as number) * 0.7) > 0 ? '+' : ''}{Math.floor((val as number) * 0.7)}
                     </span>
                   </div>
                 ))}
@@ -142,41 +113,19 @@ export default function CaseSuccess({ caseNumber, result, pair, scenario, messag
             </div>
           </div>
 
-          {/* 关系变化 */}
-          <div className="bg-dark-800/30 rounded-xl p-4">
-            <h3 className="text-sm font-medium text-white mb-3">🤝 关系变化</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-dark-400">和谐度</span>
-                <span className={`font-medium ${result.relationshipChanges.harmony > 0 ? 'text-green-400' : result.relationshipChanges.harmony < 0 ? 'text-red-400' : 'text-dark-500'}`}>
-                  {result.relationshipChanges.harmony > 0 ? '+' : ''}{result.relationshipChanges.harmony}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-dark-400">信任度</span>
-                <span className={`font-medium ${result.relationshipChanges.trust > 0 ? 'text-green-400' : result.relationshipChanges.trust < 0 ? 'text-red-400' : 'text-dark-500'}`}>
-                  {result.relationshipChanges.trust > 0 ? '+' : ''}{result.relationshipChanges.trust}
-                </span>
-              </div>
+          {/* 状态变化 */}
+          <div className="bg-dark-800/30 rounded-xl p-4 mb-4">
+            <h3 className="text-sm font-medium text-white mb-3">📊 状态变化</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(result.statusChange).map(([key, val]) => (
+                <div key={key} className="flex items-center justify-between text-xs">
+                  <span className="text-dark-400">{key}</span>
+                  <span className={`font-medium ${(val as number) > 0 ? 'text-green-400' : (val as number) < 0 ? 'text-red-400' : 'text-dark-500'}`}>
+                    {(val as number) > 0 ? '+' : ''}{val}
+                  </span>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-
-        {/* AI点评 */}
-        <div className="glass rounded-xl p-4 mb-6 border-yellow-500/20">
-          <div className="flex items-center space-x-2 mb-3">
-            <span className="text-lg">🤖</span>
-            <h3 className="text-sm font-medium text-yellow-400">AI点评师总结</h3>
-            {isStreaming && (
-              <span className="flex space-x-1">
-                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-              </span>
-            )}
-          </div>
-          <div className="text-sm text-dark-200 leading-relaxed whitespace-pre-wrap">
-            {review || '正在生成点评...'}
           </div>
         </div>
 

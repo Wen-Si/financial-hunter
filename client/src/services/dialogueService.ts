@@ -27,7 +27,7 @@ export interface ThirdPartyCharacter {
 
 // 对话消息类型
 export interface DialogueMessage {
-  role: 'male' | 'female' | 'narrator' | 'thirdParty';
+  role: 'male' | 'female' | 'narrator' | 'thirdParty' | 'ai_review';
   content: string;
   emotion?: EmotionType;
   thirdParty?: ThirdPartyCharacter;  // 当role为'thirdParty'时使用

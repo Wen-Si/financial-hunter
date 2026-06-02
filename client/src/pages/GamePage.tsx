@@ -18,6 +18,8 @@ import {
   generateCaseResult,
   shouldIntroduceThirdParty,
   generateThirdPartyDialogue,
+  generateSuccessReview,
+  generateFailureAnalysis,
 } from '../services/dialogueService';
 import * as scenarioService from '../services/scenarioService';
 import * as localService from '../services/localStorage';
@@ -241,13 +243,31 @@ export default function GamePage() {
       // 步骤4：应用结果到角色（会设置phase为'success'或保持'result'）
       const isSuccess = applyResult(result);
 
+      // 步骤5：在对话面板中流式生成AI点评
+      const reviewMsg: DialogueMessage = { role: 'ai_review', content: '' };
+      setMessages((prev) => [...prev, reviewMsg]);
+
+      const reviewGenerator = isSuccess
+        ? generateSuccessReview(characterPair, currentScenario, messages, result)
+        : generateFailureAnalysis(characterPair, currentScenario, messages, gameOverReason);
+
+      for await (const token of reviewGenerator) {
+        if (abortRef.current) return;
+        reviewMsg.content += token;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...reviewMsg };
+          return updated;
+        });
+      }
+
       // 自动运行模式下，延迟后自动进入下一关（只在通关成功时）
       if (autoRunRef.current && isSuccess) {
         setTimeout(() => {
           if (autoRunRef.current && !abortRef.current) {
             handleNextCase();
           }
-        }, 8000); // 给玩家8秒时间查看成功页面和AI点评
+        }, 5000); // 5秒后自动进入下一关
       }
 
     } catch (err) {
@@ -452,14 +472,12 @@ export default function GamePage() {
   // ==========================================
   // 通关成功页面
   // ==========================================
-  if (phase === 'success' && caseResult && characterPair && currentScenario) {
+  if (phase === 'success' && caseResult && characterPair) {
     return (
       <CaseSuccess
         caseNumber={caseCount}
         result={caseResult}
         pair={characterPair}
-        scenario={currentScenario}
-        messages={messages}
         onNext={handleNextCase}
         onBack={() => navigate('/lobby')}
         autoRun={isAutoRun}
@@ -470,13 +488,11 @@ export default function GamePage() {
   // ==========================================
   // 通关失败页面
   // ==========================================
-  if (phase === 'failure' && characterPair && currentScenario) {
+  if (phase === 'failure' && characterPair) {
     return (
       <CaseFailure
         caseNumber={caseCount}
         pair={characterPair}
-        scenario={currentScenario}
-        messages={messages}
         failureReason={gameOverReason}
         onRetry={() => {
           // 重置当前关卡的对话，重新挑战
