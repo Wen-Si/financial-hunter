@@ -427,8 +427,8 @@ export default function GamePage() {
           onComplete={handleTransitionComplete}
           autoRun={isAutoRun}
         />
-        {/* 自动运行按钮 */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+        {/* 自动运行按钮 - 右下方 */}
+        <div className="fixed bottom-6 right-6 z-40">
           <button
             onClick={toggleAutoRun}
             className={`px-6 py-3 rounded-full font-medium text-sm shadow-lg transition-all flex items-center space-x-2 ${
@@ -670,8 +670,8 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* 底部控制栏 */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+        {/* 自动运行按钮 - 右下方 */}
+        <div className="fixed bottom-6 right-6 z-40">
           <button
             onClick={toggleAutoRun}
             disabled={isGameOver}
