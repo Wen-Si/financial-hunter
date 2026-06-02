@@ -502,6 +502,7 @@ export default function GamePage() {
           startCaseDialogue();
         }}
         onBack={() => navigate('/lobby')}
+        autoRun={isAutoRun}
       />
     );
   }

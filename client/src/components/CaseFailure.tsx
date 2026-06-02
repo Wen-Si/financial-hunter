@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { CharacterPair } from '../types';
 
 interface CaseFailureProps {
@@ -7,9 +7,30 @@ interface CaseFailureProps {
   failureReason: string;
   onRetry: () => void;
   onBack: () => void;
+  autoRun?: boolean;
 }
 
-export default function CaseFailure({ caseNumber, pair, failureReason, onRetry, onBack }: CaseFailureProps) {
+export default function CaseFailure({ caseNumber, pair, failureReason, onRetry, onBack, autoRun }: CaseFailureProps) {
+  const [countdown, setCountdown] = useState(autoRun ? 5 : 0);
+
+  // 自动运行倒计时
+  useEffect(() => {
+    if (!autoRun || countdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onRetry();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [autoRun, countdown, onRetry]);
+
   return (
     <div className="min-h-screen bg-dark-950 py-6 px-4 financial-grid flex items-center justify-center">
       <div className="max-w-2xl w-full">
@@ -100,9 +121,9 @@ export default function CaseFailure({ caseNumber, pair, failureReason, onRetry, 
           </button>
           <button
             onClick={onRetry}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-400 hover:from-red-400 hover:to-red-300 text-white font-bold transition-all shadow-lg shadow-red-500/20"
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-400 hover:from-red-400 hover:to-red-300 text-white font-bold transition-all shadow-lg shadow-red-500/20 text-lg"
           >
-            重新挑战
+            {autoRun ? `继续 (${countdown}s)` : '▶ 继续'}
           </button>
         </div>
       </div>

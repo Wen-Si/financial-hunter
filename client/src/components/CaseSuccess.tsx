@@ -157,9 +157,9 @@ export default function CaseSuccess({ caseNumber, result, pair, onNext, onBack, 
           </button>
           <button
             onClick={onNext}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-dark-900 font-bold transition-all shadow-lg shadow-yellow-500/20"
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-dark-900 font-bold transition-all shadow-lg shadow-yellow-500/20 text-lg"
           >
-            {autoRun ? `下一关 (${countdown}s)` : '下一关'}
+            {autoRun ? `继续 (${countdown}s)` : '▶ 继续'}
           </button>
         </div>
       </div>
