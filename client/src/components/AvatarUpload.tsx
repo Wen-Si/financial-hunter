@@ -6,7 +6,7 @@ interface AvatarUploadProps {
   currentAvatar?: string | null;
 }
 
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 export default function AvatarUpload({ gender, onUpload, currentAvatar }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(currentAvatar || null);
@@ -19,7 +19,7 @@ export default function AvatarUpload({ gender, onUpload, currentAvatar }: Avatar
 
     // 检查文件大小
     if (file.size > MAX_FILE_SIZE) {
-      setError('图片大小不能超过1MB');
+      setError('图片大小不能超过2MB');
       return;
     }
 
@@ -110,7 +110,7 @@ export default function AvatarUpload({ gender, onUpload, currentAvatar }: Avatar
               {gender === 'male' ? '👨' : '👩'}
             </span>
             <span className="text-[10px] text-dark-400">点击或拖拽</span>
-            <span className="text-[8px] text-dark-500">≤1MB</span>
+            <span className="text-[8px] text-dark-500">≤2MB</span>
           </div>
         )}
       </div>

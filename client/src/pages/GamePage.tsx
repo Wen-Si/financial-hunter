@@ -4,6 +4,7 @@ import { avatarAPI } from '../services/api';
 import { CharacterPair, Scenario, EmotionType } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS, EMOTION_COLORS } from '../services/comicService';
 import { getCurrentBadge, getNextBadge, getBadgeProgress, Badge } from '../services/badgeService';
+import { getUnlockedQualifications, getNextQualification, isJustUnlocked, Qualification } from '../services/qualificationService';
 import DialoguePanel from '../components/DialoguePanel';
 import CaseTransition from '../components/CaseTransition';
 import CaseSuccess from '../components/CaseSuccess';
@@ -221,6 +222,11 @@ export default function GamePage() {
             updated[updated.length - 1] = { ...dialogueMsg };
             return updated;
           });
+        }
+
+        // 每轮对话结束后停顿3秒（除了最后一轮）
+        if (round < structure.totalRounds) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
 
@@ -640,6 +646,9 @@ export default function GamePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* 职业资质 */}
+                  <QualificationDisplay caseCount={caseCount} />
                 </>
               )}
             </div>
@@ -773,6 +782,47 @@ function BadgeDisplay({ completedCases }: { completedCases: number }) {
           <span>→</span>
           <span>{nextBadge.requiredCases - completedCases}关后{nextBadge.name}</span>
         </div>
+      )}
+    </div>
+  );
+}
+
+// 职业资质显示组件
+function QualificationDisplay({ caseCount }: { caseCount: number }) {
+  const unlocked = getUnlockedQualifications(caseCount);
+  const next = getNextQualification(caseCount);
+
+  return (
+    <div className="glass rounded-xl p-3">
+      <h4 className="text-xs font-medium text-dark-400 mb-2">职业资质</h4>
+      
+      {/* 已解锁资质 */}
+      {unlocked.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {unlocked.map((q) => (
+            <div
+              key={q.id}
+              className={`flex items-center space-x-1 px-2 py-1 rounded-lg ${q.bgColor} border border-opacity-30`}
+              style={{ borderColor: 'currentColor' }}
+            >
+              <span className="text-sm">{q.icon}</span>
+              <span className={`text-xs font-medium ${q.color}`}>{q.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* 下一个待解锁 */}
+      {next && (
+        <div className="text-xs text-dark-500">
+          <span className="text-dark-400">{next.requiredCases - caseCount}关后解锁: </span>
+          <span className="text-dark-300">{next.icon} {next.name}</span>
+        </div>
+      )}
+      
+      {/* 全部解锁 */}
+      {!next && unlocked.length > 0 && (
+        <div className="text-xs text-green-400">🎉 已获得全部资质</div>
       )}
     </div>
   );
