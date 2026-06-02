@@ -154,6 +154,53 @@ export async function* generateSingleDialogue(
   const shouldMakeMistake = Math.random() < 0.2 && progressRatio < 0.8;
   const mistakeHint = shouldMakeMistake ? '本轮你可以犯一个错误（判断失误、计算错误、情绪化反应等），让对话更真实。' : '';
 
+  // 根据角色属性确定分析角度（确保两个角色从不同角度出发）
+  const getAnalysisAngle = () => {
+    const attrs = speakerInfo.attributes;
+    const otherAttrs = otherInfo.attributes;
+    
+    // 找出该角色相对较强的属性（与搭档相比）
+    const advantages = [];
+    if (attrs.专业知识 > otherAttrs.专业知识) advantages.push('专业');
+    if (attrs.情商 > otherAttrs.情商) advantages.push('情商');
+    if (attrs.人脉 > otherAttrs.人脉) advantages.push('人脉');
+    if (attrs.品格 > otherAttrs.品格) advantages.push('品格');
+    if (attrs.抗压能力 > otherAttrs.抗压能力) advantages.push('抗压');
+    if (attrs.运气 > otherAttrs.运气) advantages.push('直觉');
+    
+    // 根据优势属性确定分析角度
+    if (advantages.includes('专业')) {
+      return '从专业分析角度：关注数据、模型、风险评估、合规要求、技术细节等专业层面';
+    } else if (advantages.includes('情商')) {
+      return '从人际洞察角度：关注各方利益相关者的情绪、关系维护、沟通策略、团队氛围';
+    } else if (advantages.includes('人脉')) {
+      return '从资源网络角度：关注行业关系、信息渠道、外部支持、潜在合作机会';
+    } else if (advantages.includes('品格')) {
+      return '从道德伦理角度：关注长期声誉、价值观、社会责任、职业道德底线';
+    } else if (advantages.includes('抗压')) {
+      return '从执行落地角度：关注操作可行性、时间压力、应急预案、执行风险';
+    } else {
+      return '从直觉判断角度：关注市场感觉、时机把握、机会窗口、灵活应变';
+    }
+  };
+
+  // 根据对话阶段确定具体策略
+  const getPhaseStrategy = () => {
+    if (progressRatio <= 0.4) {
+      // 早期：提出不同分析框架
+      return '提出你的核心分析框架，与搭档形成互补视角。不要重复对方的思路，而是从另一个维度切入问题。';
+    } else if (progressRatio <= 0.7) {
+      // 中期：质疑或补充
+      return '针对搭档的观点提出质疑或补充，可以从他忽略的角度切入。允许有激烈交锋，但要有建设性。';
+    } else {
+      // 后期：整合或坚持
+      return '基于前面的讨论，给出你的最终立场。可以整合双方观点，也可以坚持己见并说明理由。';
+    }
+  };
+
+  const analysisAngle = getAnalysisAngle();
+  const phaseStrategy = getPhaseStrategy();
+
   const systemPrompt = `你是金融职场模拟游戏的AI角色扮演引擎。你需要深度扮演${speakerInfo.name}进行对话。
 
 【角色设定】
@@ -177,17 +224,24 @@ export async function* generateSingleDialogue(
 - 当前阶段：${phase}（第${roundNumber}轮/共${totalRounds}轮）
 - 当前情绪：${pair.currentEmotion}
 
+【你的分析角度 - 必须遵守】
+${analysisAngle}
+
+【阶段策略】
+${phaseStrategy}
+
 【核心要求 - 必须遵守】
-1. **基于角色属性发言**：高专业知识角色要展现专业分析，高情商角色要体现人际洞察，高品格角色要关注道德底线
-2. **给出具体判断**：不要只说"我觉得"，要说"我认为应该...因为..."，提供具体分析和理由
-3. **可以有失误**：角色不是完美的，可能判断错误、情绪化、计算失误（根据运气属性）
-4. **真实争论**：
-   - 早期：各自提出不同分析角度，可能有分歧
-   - 中期：激烈争论，观点交锋，互相质疑
+1. **差异化视角**：必须与搭档从不同角度分析问题，形成互补而非重复
+2. **基于角色属性发言**：高专业知识角色要展现专业分析，高情商角色要体现人际洞察，高品格角色要关注道德底线
+3. **给出具体判断**：不要只说"我觉得"，要说"我认为应该...因为..."，提供具体分析和理由
+4. **可以有失误**：角色不是完美的，可能判断错误、情绪化、计算失误（根据运气属性）
+5. **真实争论**：
+   - 早期：各自提出不同分析角度，形成互补视角
+   - 中期：激烈争论，观点交锋，互相质疑对方忽略的因素
    - 后期：可能妥协、坚持己见、或找到折中方案
-5. **情绪真实**：压力大时可能急躁，被质疑时可能 defensive，达成共识时可能欣慰
-6. **直接输出对话内容**，不要加角色名前缀
-7. 每轮30-80字，要有实质内容
+6. **情绪真实**：压力大时可能急躁，被质疑时可能 defensive，达成共识时可能欣慰
+7. **直接输出对话内容**，不要加角色名前缀
+8. 每轮30-80字，要有实质内容
 ${mistakeHint}`;
 
   const userPrompt = `${historySummary ? `【对话历史】\n${historySummary}\n\n` : ''}【当前任务】
