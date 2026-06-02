@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { CaseResult } from '../services/dialogueService';
-import { CharacterPair } from '../types';
+import React, { useEffect, useState, useRef } from 'react';
+import { CaseResult, DialogueMessage, generateSuccessReview } from '../services/dialogueService';
+import { CharacterPair, Scenario } from '../types';
 import { EMOTION_ICONS, EMOTION_LABELS } from '../services/comicService';
 import { getCurrentBadge, getNextBadge, getBadgeProgress } from '../services/badgeService';
 
@@ -8,16 +8,45 @@ interface CaseSuccessProps {
   caseNumber: number;
   result: CaseResult;
   pair: CharacterPair;
+  scenario: Scenario;
+  messages: DialogueMessage[];
   onNext: () => void;
   onBack: () => void;
   autoRun?: boolean;
 }
 
-export default function CaseSuccess({ caseNumber, result, pair, onNext, onBack, autoRun }: CaseSuccessProps) {
+export default function CaseSuccess({ caseNumber, result, pair, scenario, messages, onNext, onBack, autoRun }: CaseSuccessProps) {
   const [countdown, setCountdown] = useState(autoRun ? 3 : 0);
+  const [review, setReview] = useState('');
+  const [isStreaming, setIsStreaming] = useState(true);
+  const abortRef = useRef(false);
   const currentBadge = getCurrentBadge(caseNumber);
   const nextBadge = getNextBadge(caseNumber);
   const progress = getBadgeProgress(caseNumber);
+
+  // AI生成总结点评
+  useEffect(() => {
+    abortRef.current = false;
+    setIsStreaming(true);
+
+    const streamReview = async () => {
+      try {
+        for await (const token of generateSuccessReview(pair, scenario, messages, result)) {
+          if (abortRef.current) return;
+          setReview(prev => prev + token);
+        }
+      } catch (err) {
+        console.error('Review stream error:', err);
+      }
+      setIsStreaming(false);
+    };
+
+    streamReview();
+
+    return () => {
+      abortRef.current = true;
+    };
+  }, [pair, scenario, messages, result]);
 
   // 自动运行倒计时
   useEffect(() => {
@@ -130,6 +159,24 @@ export default function CaseSuccess({ caseNumber, result, pair, onNext, onBack, 
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* AI点评 */}
+        <div className="glass rounded-xl p-4 mb-6 border-yellow-500/20">
+          <div className="flex items-center space-x-2 mb-3">
+            <span className="text-lg">🤖</span>
+            <h3 className="text-sm font-medium text-yellow-400">AI点评师总结</h3>
+            {isStreaming && (
+              <span className="flex space-x-1">
+                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-dark-200 leading-relaxed whitespace-pre-wrap">
+            {review || '正在生成点评...'}
           </div>
         </div>
 

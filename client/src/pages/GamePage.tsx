@@ -451,12 +451,14 @@ export default function GamePage() {
   // ==========================================
   // 通关成功页面
   // ==========================================
-  if (phase === 'success' && caseResult && characterPair) {
+  if (phase === 'success' && caseResult && characterPair && currentScenario) {
     return (
       <CaseSuccess
         caseNumber={caseCount}
         result={caseResult}
         pair={characterPair}
+        scenario={currentScenario}
+        messages={messages}
         onNext={handleNextCase}
         onBack={() => navigate('/lobby')}
         autoRun={isAutoRun}
@@ -467,11 +469,13 @@ export default function GamePage() {
   // ==========================================
   // 通关失败页面
   // ==========================================
-  if (phase === 'failure' && characterPair) {
+  if (phase === 'failure' && characterPair && currentScenario) {
     return (
       <CaseFailure
         caseNumber={caseCount}
         pair={characterPair}
+        scenario={currentScenario}
+        messages={messages}
         failureReason={gameOverReason}
         onRetry={() => {
           // 重置当前关卡的对话，重新挑战

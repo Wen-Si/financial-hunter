@@ -492,3 +492,128 @@ export async function* generateThirdPartyDialogue(
     { role: 'user', content: userPrompt },
   ], { temperature: 0.9, maxTokens: 200 });
 }
+
+// ==========================================
+// 步骤7：生成闯关成功后的AI总结点评
+// ==========================================
+export async function* generateSuccessReview(
+  pair: CharacterPair,
+  scenario: Scenario,
+  dialogueHistory: DialogueMessage[],
+  result: CaseResult
+): AsyncGenerator<string> {
+  const systemPrompt = `你是金融职场模拟游戏的AI点评师。案例已成功通关，你需要对案例和角色表现进行专业总结点评。
+
+点评风格要求：
+1. **专业但不失幽默**：可以用轻松的语气，适当的职场梗
+2. **具体且有洞察**：指出角色在对话中展现的优点和不足
+3. **有数据支撑**：引用对话中的关键判断、数据、观点
+4. **建设性**：给出未来可以改进的方向
+
+点评结构：
+1. 案例回顾（30-50字）：简要总结案例核心挑战
+2. 角色表现点评（80-120字）：
+   - 男性角色：分析其决策思路、专业展现、团队协作
+   - 女性角色：分析其决策思路、专业展现、团队协作
+3. 亮点总结（40-60字）：本轮最精彩的表现或判断
+4. 成长建议（30-50字）：给两位角色的职业发展建议
+
+总字数控制在200-300字。`;
+
+  const dialogueSummary = dialogueHistory.map((msg) => {
+    const name = msg.role === 'male' ? pair.male.name : msg.role === 'female' ? pair.female.name : msg.thirdParty?.name || '旁白';
+    return `${name}：${msg.content.slice(0, 80)}`;
+  }).join('\n');
+
+  const userPrompt = `案例信息：
+标题：${scenario.title}
+描述：${scenario.description}
+分类：${scenario.category}
+难度：${scenario.difficulty}/5
+
+角色信息：
+- ${pair.male.name}（男）：${pair.male.career.当前职位}，性格：${pair.male.characterDescription}
+- ${pair.female.name}（女）：${pair.female.career.当前职位}，性格：${pair.female.characterDescription}
+
+对话记录：
+${dialogueSummary}
+
+案例结果：
+${result.description}
+
+情绪基调：${result.emotion}
+
+请生成专业且有趣的总结点评：直接输出点评内容，不要加标题。`;
+
+  yield* streamGLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], { temperature: 0.9, maxTokens: 600 });
+}
+
+// ==========================================
+// 步骤8：生成闯关失败后的AI剖析
+// ==========================================
+export async function* generateFailureAnalysis(
+  pair: CharacterPair,
+  scenario: Scenario,
+  dialogueHistory: DialogueMessage[],
+  failureReason: string
+): AsyncGenerator<string> {
+  const systemPrompt = `你是金融职场模拟游戏的AI分析师。案例闯关失败，你需要对失败原因进行详尽剖析。
+
+剖析风格要求：
+1. **专业且客观**：基于对话内容分析，不回避问题
+2. **具体且有深度**：指出具体哪轮对话、哪个判断出了问题
+3. **有同理心**：理解角色的压力和局限，不苛责
+4. **有建设性**：给出明确的改进方向
+
+剖析结构：
+1. 失败原因诊断（60-100字）：
+   - 核心问题是什么
+   - 是哪个环节出了错
+2. 对话过程复盘（80-120字）：
+   - 回顾关键决策点
+   - 分析哪些判断是失误的
+   - 指出被忽略的风险因素
+3. 角色表现分析（60-80字）：
+   - 两位角色各自的优点和不足
+   - 协作中的问题
+4. 改进建议（50-80字）：
+   - 如果重新挑战，应该怎么做
+   - 需要提升的能力或注意的要点
+
+总字数控制在250-350字。语气要专业但鼓励性，不要打击玩家积极性。`;
+
+  const dialogueSummary = dialogueHistory.map((msg) => {
+    const name = msg.role === 'male' ? pair.male.name : msg.role === 'female' ? pair.female.name : msg.thirdParty?.name || '旁白';
+    return `${name}：${msg.content.slice(0, 80)}`;
+  }).join('\n');
+
+  const userPrompt = `案例信息：
+标题：${scenario.title}
+描述：${scenario.description}
+分类：${scenario.category}
+难度：${scenario.difficulty}/5
+
+角色信息：
+- ${pair.male.name}（男）：${pair.male.career.当前职位}，性格：${pair.male.characterDescription}
+- ${pair.female.name}（女）：${pair.female.career.当前职位}，性格：${pair.female.characterDescription}
+
+对话记录：
+${dialogueSummary}
+
+失败原因：
+${failureReason}
+
+角色当前状态：
+${pair.male.name}：金钱${pair.male.status.金钱} 心情${pair.male.status.心情} 健康${pair.male.status.健康} 声望${pair.male.status.声望}
+${pair.female.name}：金钱${pair.female.status.金钱} 心情${pair.female.status.心情} 健康${pair.female.status.健康} 声望${pair.female.status.声望}
+
+请生成详尽的失败剖析：直接输出剖析内容，不要加标题。`;
+
+  yield* streamGLM([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ], { temperature: 0.85, maxTokens: 700 });
+}
