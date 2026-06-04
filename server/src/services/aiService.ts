@@ -113,7 +113,7 @@ ${scenario.choices.map((choice, index) => `${index + 1}. ${choice.text}`).join('
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'glm-4.5-flash',
+        model: 'glm-4.7-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
