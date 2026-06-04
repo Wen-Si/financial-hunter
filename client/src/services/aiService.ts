@@ -28,7 +28,9 @@ async function callGLM(messages: { role: string; content: string }[], temperatur
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || null;
+    const message = data.choices?.[0]?.message;
+    // glm-4.5-flash 可能将内容放在 reasoning_content 中
+    return message?.content || message?.reasoning_content || null;
   } catch (err) {
     console.warn('GLM API call error:', err);
     return null;
