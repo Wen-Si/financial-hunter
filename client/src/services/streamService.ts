@@ -42,6 +42,8 @@ export async function* streamGLM(
   });
 
   if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    console.error('GLM API error:', response.status, errorText);
     throw new Error(`GLM API error: ${response.status}`);
   }
 
@@ -50,6 +52,7 @@ export async function* streamGLM(
 
   const decoder = new TextDecoder();
   let buffer = '';
+  let tokenCount = 0;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -70,16 +73,19 @@ export async function* streamGLM(
           // 只取正式回答，忽略思考过程（reasoning_content）
           const content = json.choices?.[0]?.delta?.content;
           if (content) {
+            tokenCount++;
             // 添加延迟控制流式速度
             await new Promise(resolve => setTimeout(resolve, delay));
             yield content;
           }
-        } catch {
-          // 忽略解析错误
+        } catch (e) {
+          console.warn('SSE parse error:', e, 'line:', trimmed.slice(0, 100));
         }
       }
     }
   }
+
+  console.log('streamGLM finished, tokens:', tokenCount);
 }
 
 // 非流式调用（兼容旧代码）

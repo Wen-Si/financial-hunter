@@ -167,6 +167,7 @@ export default function GamePage() {
           if (newThirdParty) {
             thirdParty = newThirdParty;
             for (let tpRound = 0; tpRound < 2 && round + tpRound <= structure.totalRounds; tpRound++) {
+              let tpContent = '';
               const tpMsg: DialogueMessage = {
                 role: 'thirdParty',
                 content: '',
@@ -184,10 +185,10 @@ export default function GamePage() {
                 structure.totalRounds
               )) {
                 if (abortRef.current) return;
-                tpMsg.content += token;
+                tpContent += token;
                 setMessages((prev) => {
                   const updated = [...prev];
-                  updated[updated.length - 1] = { ...tpMsg };
+                  updated[updated.length - 1] = { ...updated[updated.length - 1], content: tpContent };
                   return updated;
                 });
               }
@@ -205,6 +206,7 @@ export default function GamePage() {
             ? 'female'
             : 'male';
 
+        let currentContent = '';
         const dialogueMsg: DialogueMessage = { role: speaker, content: '' };
         setMessages((prev) => [...prev, dialogueMsg]);
         setCurrentRound(round);
@@ -218,10 +220,10 @@ export default function GamePage() {
           structure.totalRounds
         )) {
           if (abortRef.current) return;
-          dialogueMsg.content += token;
+          currentContent += token;
           setMessages((prev) => {
             const updated = [...prev];
-            updated[updated.length - 1] = { ...dialogueMsg };
+            updated[updated.length - 1] = { ...updated[updated.length - 1], content: currentContent };
             return updated;
           });
         }
@@ -244,6 +246,7 @@ export default function GamePage() {
       const isSuccess = applyResult(result);
 
       // 步骤5：在对话面板中流式生成AI点评
+      let reviewContent = '';
       const reviewMsg: DialogueMessage = { role: 'ai_review', content: '' };
       setMessages((prev) => [...prev, reviewMsg]);
 
@@ -253,10 +256,10 @@ export default function GamePage() {
 
       for await (const token of reviewGenerator) {
         if (abortRef.current) return;
-        reviewMsg.content += token;
+        reviewContent += token;
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { ...reviewMsg };
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: reviewContent };
           return updated;
         });
       }
