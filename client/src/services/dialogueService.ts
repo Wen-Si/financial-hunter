@@ -66,7 +66,7 @@ export async function* generateCaseIntroduction(
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.9, maxTokens: 500 });
+  ], { temperature: 0.9, maxTokens: 1500 });
 }
 
 // ==========================================
@@ -286,7 +286,7 @@ ${mistakeHint}`;
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.95, maxTokens: 200 });
+  ], { temperature: 0.95, maxTokens: 1000 });
 }
 
 // ==========================================
@@ -345,7 +345,7 @@ ${dialogueSummary}
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.85, maxTokens: 800 });
+  ], { temperature: 0.85, maxTokens: 1500 });
 }
 
 // ==========================================
@@ -490,7 +490,7 @@ export async function* generateThirdPartyDialogue(
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.9, maxTokens: 200 });
+  ], { temperature: 0.9, maxTokens: 1000 });
 }
 
 // ==========================================
@@ -548,7 +548,7 @@ ${result.description}
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.9, maxTokens: 600 });
+  ], { temperature: 0.9, maxTokens: 1500 });
 }
 
 // ==========================================
@@ -615,5 +615,5 @@ ${pair.female.name}：金钱${pair.female.status.金钱} 心情${pair.female.sta
   yield* streamGLM([
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
-  ], { temperature: 0.85, maxTokens: 700 });
+  ], { temperature: 0.85, maxTokens: 1500 });
 }
