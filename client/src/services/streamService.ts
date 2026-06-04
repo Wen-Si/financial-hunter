@@ -67,9 +67,8 @@ export async function* streamGLM(
       if (trimmed.startsWith('data: ')) {
         try {
           const json = JSON.parse(trimmed.slice(6));
-          // glm-4.5-flash 可能将内容放在 reasoning_content 中
-          const delta = json.choices?.[0]?.delta;
-          const content = delta?.content || delta?.reasoning_content || '';
+          // 只取正式回答，忽略思考过程（reasoning_content）
+          const content = json.choices?.[0]?.delta?.content;
           if (content) {
             // 添加延迟控制流式速度
             await new Promise(resolve => setTimeout(resolve, delay));
@@ -107,8 +106,8 @@ export async function callGLM(
 
     const data = await response.json();
     const message = data.choices?.[0]?.message;
-    // glm-4.5-flash 可能将内容放在 reasoning_content 中
-    return message?.content || message?.reasoning_content || null;
+    // 只取正式回答，忽略思考过程
+    return message?.content || null;
   } catch {
     return null;
   }
