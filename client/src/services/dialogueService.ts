@@ -55,13 +55,18 @@ export async function* generateCaseIntroduction(
 - 男性角色：${pair.male.name}（${pair.male.career.当前职位}）
 - 女性角色：${pair.female.name}（${pair.female.career.当前职位}）
 
-请用200-300字生动描述这个案例的背景，营造紧张感和代入感。直接输出旁白文本，不要加任何前缀。`;
+请用300-400字生动描述这个案例的背景，包含：
+1. 引人入胜的开场（营造紧张感和代入感）
+2. 详细的背景信息（涉及的人物、金额、时间压力等关键要素）
+3. 当前面临的困境和抉择
+
+直接输出旁白文本，不要加任何前缀。用生动的语言让玩家感受到案例的紧迫感和真实感。`;
 
   const userPrompt = `案例标题：${scenario.title}
 案例描述：${scenario.description}
-背景信息：${scenario.context}
+参考背景：${scenario.context}
 
-请为这个案例写一段引人入胜的开场旁白。`;
+请为这个案例写一段完整的背景介绍，包含开场和详细背景。`;
 
   yield* streamGLM([
     { role: 'system', content: systemPrompt },

@@ -127,16 +127,6 @@ export default function CaseTransition({
           </div>
         </div>
 
-        {/* 案例背景信息（静态） */}
-        {scenario.context && (
-          <div className="financial-card rounded-xl p-5 mb-6">
-            <h3 className="text-sm font-medium text-yellow-500/80 mb-3 flex items-center">
-              <span className="mr-2">📌</span> 背景信息
-            </h3>
-            <p className="text-dark-300 text-sm leading-relaxed">{scenario.context}</p>
-          </div>
-        )}
-
         {/* 选项预览 */}
         {scenario.choices && scenario.choices.length > 0 && (
           <div className="financial-card rounded-xl p-5 mb-8">
