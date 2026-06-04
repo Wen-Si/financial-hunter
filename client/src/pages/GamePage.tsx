@@ -44,6 +44,7 @@ export default function GamePage() {
 
   // 当前场景
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
 
   // 对话状态
   const [messages, setMessages] = useState<DialogueMessage[]>([]);
@@ -125,7 +126,10 @@ export default function GamePage() {
   // ==========================================
   // 过渡页面完成 → 进入对话
   // ==========================================
-  const handleTransitionComplete = useCallback(() => {
+  const handleTransitionComplete = useCallback((selectedChoiceId?: string) => {
+    if (selectedChoiceId) {
+      setSelectedChoice(selectedChoiceId);
+    }
     setPhase('dialogue');
     setTimeout(() => startCaseDialogue(), 300);
   }, [characterPair, currentScenario]);

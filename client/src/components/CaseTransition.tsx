@@ -6,7 +6,7 @@ interface CaseTransitionProps {
   scenario: Scenario;
   pair: CharacterPair;
   caseNumber: number;
-  onComplete: () => void;
+  onComplete: (selectedChoiceId?: string) => void;
   autoRun: boolean;
 }
 
@@ -19,6 +19,7 @@ export default function CaseTransition({
 }: CaseTransitionProps) {
   const [introText, setIntroText] = useState('');
   const [isStreaming, setIsStreaming] = useState(true);
+  const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const streamingRef = useRef(false);
   const abortRef = useRef(false);
 
@@ -40,8 +41,13 @@ export default function CaseTransition({
       setIsStreaming(false);
       streamingRef.current = false;
 
-      // 自动运行模式下自动进入
-      if (autoRun) {
+      // 自动运行模式下自动选择第一个选项并进入
+      if (autoRun && scenario.choices && scenario.choices.length > 0) {
+        setSelectedChoiceId(scenario.choices[0].id);
+        setTimeout(() => {
+          if (!abortRef.current) onComplete(scenario.choices[0].id);
+        }, 3000);
+      } else if (autoRun) {
         setTimeout(() => {
           if (!abortRef.current) onComplete();
         }, 3000);
@@ -57,9 +63,11 @@ export default function CaseTransition({
 
   const handleStart = () => {
     if (!streamingRef.current) {
-      onComplete();
+      onComplete(selectedChoiceId || undefined);
     }
   };
+
+  const canStart = !isStreaming && (!scenario.choices || scenario.choices.length === 0 || selectedChoiceId !== null);
 
   // 难度星星
   const difficultyStars = '⭐'.repeat(scenario.difficulty);
@@ -127,22 +135,41 @@ export default function CaseTransition({
           </div>
         </div>
 
-        {/* 选项预览 */}
+        {/* 可选方向 - 玩家需要选择 */}
         {scenario.choices && scenario.choices.length > 0 && (
           <div className="financial-card rounded-xl p-5 mb-8">
             <h3 className="text-sm font-medium text-yellow-500/80 mb-3 flex items-center">
-              <span className="mr-2">🎯</span> 可选方向
+              <span className="mr-2">🎯</span> 请选择你的方向
+              {!selectedChoiceId && !isStreaming && (
+                <span className="ml-2 text-xs text-dark-400">（点击选择）</span>
+              )}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {scenario.choices.map((choice, index) => (
-                <div
-                  key={choice.id}
-                  className="bg-dark-800/30 border border-dark-700/30 rounded-lg px-4 py-2.5 text-sm text-dark-300 flex items-center space-x-2"
-                >
-                  <span className="text-yellow-500 font-bold">{String.fromCharCode(65 + index)}</span>
-                  <span>{choice.text}</span>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {scenario.choices.map((choice, index) => {
+                const isSelected = selectedChoiceId === choice.id;
+                return (
+                  <button
+                    key={choice.id}
+                    onClick={() => setSelectedChoiceId(choice.id)}
+                    disabled={isStreaming}
+                    className={`text-left rounded-lg px-4 py-3 text-sm flex items-start space-x-3 transition-all ${
+                      isSelected
+                        ? 'bg-yellow-500/20 border-2 border-yellow-500 text-yellow-300 shadow-lg shadow-yellow-500/10'
+                        : isStreaming
+                          ? 'bg-dark-800/30 border border-dark-700/30 text-dark-500 cursor-not-allowed'
+                          : 'bg-dark-800/30 border border-dark-700/30 text-dark-300 hover:border-yellow-500/50 hover:bg-dark-800/50 cursor-pointer'
+                    }`}
+                  >
+                    <span className={`font-bold mt-0.5 ${isSelected ? 'text-yellow-400' : 'text-yellow-500/60'}`}>
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span className="leading-relaxed">{choice.text}</span>
+                    {isSelected && (
+                      <span className="ml-auto text-yellow-400 flex-shrink-0">✓</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -151,9 +178,9 @@ export default function CaseTransition({
         <div className="text-center">
           <button
             onClick={handleStart}
-            disabled={isStreaming}
+            disabled={!canStart}
             className={`px-8 py-3 rounded-xl font-medium text-sm transition-all ${
-              isStreaming
+              !canStart
                 ? 'bg-dark-800 text-dark-500 cursor-not-allowed border border-dark-700'
                 : 'bg-gradient-to-r from-yellow-500 to-amber-500 text-dark-950 hover:from-yellow-400 hover:to-amber-400 shadow-lg shadow-yellow-500/20'
             }`}
@@ -164,6 +191,11 @@ export default function CaseTransition({
                 <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
                 <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
                 <span className="ml-2">案例加载中...</span>
+              </span>
+            ) : !selectedChoiceId && scenario.choices && scenario.choices.length > 0 ? (
+              <span className="flex items-center space-x-2">
+                <span>🎯</span>
+                <span>请先选择方向</span>
               </span>
             ) : (
               <span className="flex items-center space-x-2">
