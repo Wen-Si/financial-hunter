@@ -19,7 +19,7 @@ export async function* streamGLM(
   const {
     temperature = 0.85,
     maxTokens = 2000,
-    model = 'glm-4.7-flash',
+    model = 'glm-4-flash',
     speedFactor = 0.5, // 默认降速50%
   } = options;
 
@@ -101,7 +101,7 @@ export async function callGLM(
         Authorization: `Bearer ${GLM_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'glm-4.7-flash',
+        model: 'glm-4-flash',
         messages,
         temperature,
         max_tokens: 1500,

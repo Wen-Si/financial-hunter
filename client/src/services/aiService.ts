@@ -15,7 +15,7 @@ async function callGLM(messages: { role: string; content: string }[], temperatur
         Authorization: `Bearer ${GLM_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'glm-4.7-flash',
+        model: 'glm-4-flash',
         messages,
         temperature: temperature, // 使用传入的温度参数，增加随机性
         max_tokens: 1500,
