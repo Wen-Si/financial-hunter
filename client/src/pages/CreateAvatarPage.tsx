@@ -62,20 +62,28 @@ export default function CreateAvatarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 py-8 px-4">
+    <div className="min-h-screen bg-dark-950 bg-pattern py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* 标题 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gold-gradient mb-2">创建角色对</h1>
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-3xl font-bold font-serif text-gold-gradient mb-2">创建角色对</h1>
+          <div className="gold-divider w-24 mx-auto mb-3"></div>
           <p className="text-dark-400">你需要创建一对搭档，共同经历金融职场的挑战</p>
         </div>
 
         {/* 说明卡片 */}
-        <div className="glass rounded-xl p-6 mb-8 border border-yellow-500/20">
+        <div className="financial-card rounded-xl p-6 mb-8 animate-slide-in">
           <div className="flex items-start space-x-4">
-            <span className="text-4xl">👫</span>
+            <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-gold-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
             <div>
-              <h3 className="text-lg font-semibold text-white mb-2">双角色合作模式</h3>
+              <h3 className="text-lg font-semibold font-serif text-gold-light mb-2">双角色合作模式</h3>
               <p className="text-dark-300 text-sm leading-relaxed">
                 你将创建一对角色搭档（1男1女），在游戏中他们将紧密合作、相互支持。当然，合作过程中也会有欢乐、冲突和成长的时刻。两个角色都由AI驱动，会根据各自的特点和当前情境做出决策。
               </p>
@@ -86,11 +94,13 @@ export default function CreateAvatarPage() {
         <form onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* 男性角色 */}
-            <div className="glass rounded-xl p-6">
+            <div className="financial-card rounded-xl p-6 animate-slide-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <span className="text-3xl">👨</span>
-                  <h2 className="text-xl font-bold text-white">男性角色</h2>
+                  <span className="w-9 h-9 flex-shrink-0 rounded-full bg-navy border border-gold/30 flex items-center justify-center font-serif font-bold text-gold-light">
+                    男
+                  </span>
+                  <h2 className="text-xl font-bold font-serif text-gold-light">男性角色</h2>
                 </div>
                 <AvatarUpload
                   gender="male"
@@ -133,19 +143,21 @@ export default function CreateAvatarPage() {
                 <button
                   type="button"
                   onClick={fillMaleExample}
-                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+                  className="text-sm text-gold-light hover:text-gold transition-colors"
                 >
-                  📝 使用示例描述
+                  使用示例描述
                 </button>
               </div>
             </div>
 
             {/* 女性角色 */}
-            <div className="glass rounded-xl p-6">
+            <div className="financial-card rounded-xl p-6 animate-slide-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <span className="text-3xl">👩</span>
-                  <h2 className="text-xl font-bold text-white">女性角色</h2>
+                  <span className="w-9 h-9 flex-shrink-0 rounded-full bg-navy border border-gold/30 flex items-center justify-center font-serif font-bold text-gold-light">
+                    女
+                  </span>
+                  <h2 className="text-xl font-bold font-serif text-gold-light">女性角色</h2>
                 </div>
                 <AvatarUpload
                   gender="female"
@@ -188,9 +200,9 @@ export default function CreateAvatarPage() {
                 <button
                   type="button"
                   onClick={fillFemaleExample}
-                  className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+                  className="text-sm text-gold-light hover:text-gold transition-colors"
                 >
-                  📝 使用示例描述
+                  使用示例描述
                 </button>
               </div>
             </div>
@@ -218,7 +230,7 @@ export default function CreateAvatarPage() {
                   创建中...
                 </span>
               ) : (
-                '🎮 开始冒险'
+                '开始冒险'
               )}
             </button>
           </div>
@@ -226,7 +238,7 @@ export default function CreateAvatarPage() {
 
         {/* 提示 */}
         <div className="text-center mt-8 text-dark-500 text-sm">
-          <p>💡 提示：仔细思考两个角色的性格互补性，他们将在游戏中互相配合面对各种挑战</p>
+          <p>提示：仔细思考两个角色的性格互补性，他们将在游戏中互相配合面对各种挑战</p>
         </div>
       </div>
     </div>

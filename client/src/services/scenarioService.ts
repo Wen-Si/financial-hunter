@@ -7,6 +7,8 @@ export interface ScenarioWithOutcomes extends Scenario {
     attributesChange: Partial<AvatarAttributes>;
     statusChange: Partial<Status>;
   }>;
+  narrativeElements?: any;
+  [key: string]: any;
 }
 
 // 基础场景（原有场景）

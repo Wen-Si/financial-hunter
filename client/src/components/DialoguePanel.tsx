@@ -14,26 +14,25 @@ interface DialoguePanelProps {
   autoScroll?: boolean;
 }
 
-// 第三方角色图标映射
-const THIRD_PARTY_ICONS: Record<ThirdPartyRole, string> = {
-  boss: '👔',
-  colleague: '👥',
-  regulator: '⚖️',
-  peer: '🏢',
-  competitor: '🎯',
-  client: '💼',
-  partner: '🤝',
+// 第三方角色文字标签映射（替代 emoji 图标）
+const THIRD_PARTY_LABELS: Record<ThirdPartyRole, string> = {
+  boss: '上司',
+  colleague: '同僚',
+  regulator: '监管',
+  peer: '同业',
+  competitor: '竞对',
+  client: '客户',
+  partner: '合作方',
 };
 
-// 第三方角色颜色映射
-const THIRD_PARTY_COLORS: Record<ThirdPartyRole, string> = {
-  boss: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  colleague: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  regulator: 'bg-red-500/20 text-red-400 border-red-500/30',
-  peer: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-  competitor: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  client: 'bg-green-500/20 text-green-400 border-green-500/30',
-  partner: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+// 情绪文字标签（本地映射，不改动 import）
+const EMOTION_TEXT: Record<string, string> = {
+  joy: '愉悦',
+  conflict: '冲突',
+  sadness: '悲伤',
+  tension: '紧张',
+  harmony: '和谐',
+  neutral: '平静',
 };
 
 export default function DialoguePanel({
@@ -57,9 +56,9 @@ export default function DialoguePanel({
   }, [messages, autoScroll]);
 
   const getSpeakerName = (msg: DialogueMessage) => {
-    if (msg.role === 'ai_review') return '🤖 AI点评师';
-    if (msg.role === 'male') return pair?.male.name || '他';
-    if (msg.role === 'female') return pair?.female.name || '她';
+    if (msg.role === 'ai_review') return 'AI点评师';
+    if (msg.role === 'male') return pair?.male.name || '男角色';
+    if (msg.role === 'female') return pair?.female.name || '女角色';
     if (msg.role === 'thirdParty') return msg.thirdParty?.name || '第三方';
     return '旁白';
   };
@@ -83,17 +82,17 @@ export default function DialoguePanel({
         <div className="flex items-center space-x-3">
           <span className="text-sm font-medium text-dark-400">对话进度</span>
           <div className="flex items-center space-x-1">
-            <span className="text-lg font-bold text-yellow-400">{currentRound}</span>
+            <span className="text-lg font-bold text-gold-light tabular-nums">{currentRound}</span>
             <span className="text-dark-500">/</span>
-            <span className="text-sm text-dark-400">{totalRounds}轮</span>
+            <span className="text-sm text-dark-400 tabular-nums">{totalRounds}轮</span>
           </div>
         </div>
         {isStreaming && (
           <div className="flex items-center space-x-2">
-            <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-            <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-            <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-            <span className="text-xs text-yellow-400 ml-1">AI生成中</span>
+            <span className="loading-dot w-1.5 h-1.5 bg-gold-light rounded-full"></span>
+            <span className="loading-dot w-1.5 h-1.5 bg-gold-light rounded-full"></span>
+            <span className="loading-dot w-1.5 h-1.5 bg-gold-light rounded-full"></span>
+            <span className="text-xs text-gold-light ml-1">AI生成中</span>
           </div>
         )}
       </div>
@@ -101,7 +100,7 @@ export default function DialoguePanel({
       {/* 进度条 */}
       <div className="h-1 bg-dark-800">
         <div
-          className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-gold-dark to-gold-light transition-all duration-500"
           style={{ width: `${Math.min(100, (currentRound / totalRounds) * 100)}%` }}
         />
       </div>
@@ -115,14 +114,18 @@ export default function DialoguePanel({
           const speakerName = getSpeakerName(msg);
           const avatarUrl = getSpeakerAvatar(msg);
           const gender = getSpeakerGender(msg.role);
+          const showCursor = isStreaming && index === messages.length - 1;
 
           if (isNarrator) {
-            // 旁白样式
+            // 旁白样式：glass + 金色左边框
             return (
-              <div key={index} className="flex justify-center">
-                <div className="max-w-2xl w-full bg-dark-800/30 border border-dark-700/30 rounded-xl px-5 py-3">
-                  <div className="flex items-start space-x-2">
-                    <span className="text-yellow-500 text-sm mt-0.5">📖</span>
+              <div key={index} className="flex justify-center animate-fade-in">
+                <div
+                  className="max-w-2xl w-full glass rounded-xl px-5 py-3"
+                  style={{ borderLeft: '2px solid rgba(201, 162, 39, 0.6)' }}
+                >
+                  <div className="flex items-start space-x-3">
+                    <span className="font-serif text-xs text-gold mt-0.5 tracking-wider whitespace-nowrap">旁白</span>
                     <p className="text-dark-300 text-sm leading-relaxed">{msg.content}</p>
                   </div>
                 </div>
@@ -130,21 +133,24 @@ export default function DialoguePanel({
             );
           }
 
-          // AI点评样式
+          // AI点评样式：glass + 金色左边框
           if (isAiReview) {
             return (
-              <div key={index} className="flex justify-center">
-                <div className="max-w-2xl w-full bg-gradient-to-br from-yellow-500/10 to-amber-500/5 border border-yellow-500/30 rounded-xl px-5 py-4">
+              <div key={index} className="flex justify-center animate-fade-in">
+                <div
+                  className="max-w-2xl w-full glass rounded-xl px-5 py-4"
+                  style={{ borderLeft: '2px solid rgba(201, 162, 39, 0.6)' }}
+                >
                   <div className="flex items-center space-x-2 mb-3">
-                    <span className="text-lg">🤖</span>
-                    <h3 className="text-sm font-medium text-yellow-400">AI点评师总结</h3>
+                    <svg className="w-4 h-4 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <h3 className="font-serif text-sm font-medium text-gold-light">AI点评师总结</h3>
                   </div>
                   <p className="text-sm text-dark-200 leading-relaxed whitespace-pre-wrap">
                     {msg.content}
-                    {/* 流式光标 */}
-                    {isStreaming && index === messages.length - 1 && (
-                      <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
-                    )}
+                    {showCursor && <span className="streaming-cursor" />}
                   </p>
                 </div>
               </div>
@@ -153,30 +159,26 @@ export default function DialoguePanel({
 
           // 第三方角色样式
           if (isThirdParty && msg.thirdParty) {
-            const icon = THIRD_PARTY_ICONS[msg.thirdParty.role];
-            const colorClass = THIRD_PARTY_COLORS[msg.thirdParty.role];
+            const label = THIRD_PARTY_LABELS[msg.thirdParty.role];
             return (
-              <div key={index} className="flex justify-center">
+              <div key={index} className="flex justify-center animate-slide-in">
                 <div className="flex items-start space-x-3 max-w-[80%]">
                   {/* 头像 */}
                   <div className="flex-shrink-0">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${colorClass} border`}>
-                      {icon}
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-medium bg-gold/10 text-gold-light border border-gold/20">
+                      {label}
                     </div>
                   </div>
 
                   {/* 对话气泡 */}
-                  <div className="bg-dark-700/50 border border-dark-600/50 rounded-2xl px-4 py-2.5 rounded-tl-sm">
+                  <div className="financial-card rounded-2xl px-4 py-2.5 rounded-tl-sm">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xs font-medium text-dark-300">{speakerName}</span>
+                      <span className="font-serif text-xs font-medium text-gold-light">{speakerName}</span>
                       <span className="text-xs text-dark-500">{msg.thirdParty.title}</span>
                     </div>
                     <p className="text-sm leading-relaxed text-dark-200">
                       {msg.content}
-                      {/* 流式光标 */}
-                      {isStreaming && index === messages.length - 1 && (
-                        <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
-                      )}
+                      {showCursor && <span className="streaming-cursor" />}
                     </p>
                   </div>
                 </div>
@@ -189,7 +191,7 @@ export default function DialoguePanel({
           return (
             <div
               key={index}
-              className={`flex ${isMale ? 'justify-start' : 'justify-end'}`}
+              className={`flex ${isMale ? 'justify-start' : 'justify-end'} animate-slide-in`}
             >
               <div className={`flex items-start space-x-3 max-w-[80%] ${isMale ? '' : 'flex-row-reverse space-x-reverse'}`}>
                 {/* 头像 */}
@@ -198,18 +200,10 @@ export default function DialoguePanel({
                     <img
                       src={avatarUrl}
                       alt={speakerName}
-                      className={`w-9 h-9 rounded-lg object-cover border-2 ${
-                        isMale ? 'border-blue-400/40' : 'border-pink-400/40'
-                      }`}
+                      className="w-9 h-9 rounded-lg object-cover border-2 border-gold/20"
                     />
                   ) : (
-                    <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${
-                        isMale
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                          : 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
-                      }`}
-                    >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold bg-gold/10 text-gold-light border border-gold/20">
                       {speakerName.charAt(0)}
                     </div>
                   )}
@@ -217,18 +211,12 @@ export default function DialoguePanel({
 
                 {/* 对话气泡 */}
                 <div
-                  className={`rounded-2xl px-4 py-2.5 ${
-                    isMale
-                      ? 'bg-dark-800/80 border border-dark-700/50 rounded-tl-sm'
-                      : 'bg-yellow-500/10 border border-yellow-500/20 rounded-tr-sm'
-                  }`}
+                  className={`financial-card rounded-2xl px-4 py-2.5 ${isMale ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
                 >
-                  <p className={`text-sm leading-relaxed ${isMale ? 'text-dark-200' : 'text-dark-100'}`}>
+                  <span className="font-serif text-xs text-gold-light block mb-0.5">{speakerName}</span>
+                  <p className="text-sm leading-relaxed text-dark-100">
                     {msg.content}
-                    {/* 流式光标 */}
-                    {isStreaming && index === messages.length - 1 && (
-                      <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
-                    )}
+                    {showCursor && <span className="streaming-cursor" />}
                   </p>
                 </div>
               </div>
@@ -238,21 +226,21 @@ export default function DialoguePanel({
 
         {/* 案例结果 */}
         {caseResult && (
-          <div className="flex justify-center mt-4">
-            <div className="max-w-2xl w-full bg-gradient-to-br from-yellow-500/10 to-amber-500/5 border border-yellow-500/30 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-yellow-400 mb-2 flex items-center">
-                <span className="mr-2">⚡</span>
-                案例结果
+          <div className="flex justify-center mt-4 animate-fade-in">
+            <div className="max-w-2xl w-full financial-card rounded-xl p-5">
+              <h3 className="font-serif text-sm font-semibold text-gold-light mb-3 flex items-center space-x-2">
+                <svg className="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+                </svg>
+                <span>案例结果</span>
               </h3>
               <p className="text-dark-200 text-sm leading-relaxed mb-3">{caseResult.description}</p>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(caseResult.attributesChange).map(([key, val]) => (
                   <span
                     key={key}
-                    className={`px-2 py-0.5 rounded text-xs ${
-                      (val as number) > 0
-                        ? 'bg-green-500/10 text-green-400'
-                        : 'bg-red-500/10 text-red-400'
+                    className={`px-2 py-0.5 rounded text-xs tabular-nums bg-gold/10 ${
+                      (val as number) > 0 ? 'text-gold-light' : 'text-gold-dark'
                     }`}
                   >
                     {key} {(val as number) > 0 ? `+${val}` : val}
@@ -261,10 +249,8 @@ export default function DialoguePanel({
                 {Object.entries(caseResult.statusChange).map(([key, val]) => (
                   <span
                     key={key}
-                    className={`px-2 py-0.5 rounded text-xs ${
-                      (val as number) > 0
-                        ? 'bg-green-500/10 text-green-400'
-                        : 'bg-red-500/10 text-red-400'
+                    className={`px-2 py-0.5 rounded text-xs tabular-nums bg-gold/10 ${
+                      (val as number) > 0 ? 'text-gold-light' : 'text-gold-dark'
                     }`}
                   >
                     {key} {(val as number) > 0 ? `+${val}` : val}
@@ -272,8 +258,8 @@ export default function DialoguePanel({
                 ))}
               </div>
               {caseResult.emotion && (
-                <div className="mt-2 text-sm text-dark-400">
-                  情绪：{EMOTION_ICONS[caseResult.emotion]} {caseResult.emotion}
+                <div className="mt-3 text-sm text-dark-400">
+                  情绪：<span className="text-gold-light font-serif">{EMOTION_TEXT[caseResult.emotion] || caseResult.emotion}</span>
                 </div>
               )}
             </div>
@@ -287,7 +273,7 @@ export default function DialoguePanel({
       {caseResult && (
         <div className="px-5 py-3 border-t border-dark-700/50 flex justify-center">
           <button onClick={onExecuteNext} className="btn-primary">
-            ▶ 进入下一个案例
+            进入下一个案例
           </button>
         </div>
       )}

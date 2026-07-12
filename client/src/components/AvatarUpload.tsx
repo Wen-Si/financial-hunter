@@ -76,9 +76,10 @@ export default function AvatarUpload({ gender, onUpload, currentAvatar }: Avatar
     }
   };
 
-  const borderColor = gender === 'male' ? 'border-blue-400/30' : 'border-pink-400/30';
-  const bgColor = gender === 'male' ? 'bg-blue-500/10' : 'bg-pink-500/10';
-  const iconColor = gender === 'male' ? 'text-blue-400' : 'text-pink-400';
+  // 统一金融风格：金色边框与配色
+  const borderColor = 'border-gold/30';
+  const bgColor = 'bg-gold/5';
+  const iconColor = 'text-gold-light';
 
   return (
     <div className="space-y-2">
@@ -88,8 +89,8 @@ export default function AvatarUpload({ gender, onUpload, currentAvatar }: Avatar
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={`relative w-24 h-24 rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden ${
-          isDragging ? 'border-yellow-400 bg-yellow-500/10' : borderColor + ' ' + bgColor
-        } hover:border-yellow-400/50`}
+          isDragging ? 'border-gold-light bg-gold/10' : borderColor + ' ' + bgColor
+        } hover:border-gold-light/60`}
       >
         {preview ? (
           <>
@@ -106,8 +107,8 @@ export default function AvatarUpload({ gender, onUpload, currentAvatar }: Avatar
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-1">
-            <span className={`text-lg ${iconColor} mb-0.5`}>
-              {gender === 'male' ? '👨' : '👩'}
+            <span className={`text-sm font-serif font-bold ${iconColor} mb-0.5`}>
+              {gender === 'male' ? '男' : '女'}
             </span>
             <span className="text-[10px] text-dark-400">点击或拖拽</span>
             <span className="text-[8px] text-dark-500">≤2MB</span>

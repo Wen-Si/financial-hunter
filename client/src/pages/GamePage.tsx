@@ -24,6 +24,97 @@ import {
 import * as scenarioService from '../services/scenarioService';
 import * as localService from '../services/localStorage';
 
+// ========== 金融风格 SVG 图标 ==========
+type IconProps = { className?: string };
+
+const IconChart = ({ className = 'w-4 h-4' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v18h18" />
+    <path d="M7 14l4-4 4 4 5-6" />
+  </svg>
+);
+
+const IconDoc = ({ className = 'w-4 h-4' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 13h8M8 17h5" />
+  </svg>
+);
+
+const IconPin = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </svg>
+);
+
+const IconCoin = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M14.5 9.5c-.5-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.4-2.5-1.2" />
+    <path d="M12 6.5v1.8M12 15.7v1.8" />
+  </svg>
+);
+
+const IconHeart = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+  </svg>
+);
+
+const IconSmile = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+    <line x1="9" y1="9" x2="9.01" y2="9" />
+    <line x1="15" y1="9" x2="15.01" y2="9" />
+  </svg>
+);
+
+const IconStar = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9" />
+  </svg>
+);
+
+const IconMedal = ({ className = 'w-4 h-4' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="15" r="6" />
+    <path d="M8.5 9.5L7 3l5 3 5-3-1.5 6.5" />
+    <path d="M12 12.5l1 2 2 .2-1.5 1.4.4 2-1.9-1.1-1.9 1.1.4-2L9 14.7l2-.2z" />
+  </svg>
+);
+
+const IconCert = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="14" rx="2" />
+    <path d="M3 8h18" />
+    <path d="M7 13h4" />
+    <circle cx="17" cy="14.5" r="2.5" />
+    <path d="M15.5 16.5L14 21l3-1.5 3 1.5-1.5-4.5" />
+  </svg>
+);
+
+const IconPlay = ({ className = 'w-4 h-4' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="6 4 20 12 6 20" />
+  </svg>
+);
+
+const IconClose = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" y1="6" x2="18" y2="18" />
+    <line x1="18" y1="6" x2="6" y2="18" />
+  </svg>
+);
+
+const IconCheck = ({ className = 'w-3.5 h-3.5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 // 游戏阶段
 type GamePhase = 'transition' | 'dialogue' | 'success' | 'failure' | 'result';
 
@@ -428,15 +519,18 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-950 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="text-4xl">📈</div>
-          <div className="flex items-center justify-center space-x-1">
-            <div className="loading-dot w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <div className="loading-dot w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <div className="loading-dot w-2 h-2 bg-yellow-400 rounded-full"></div>
+      <div className="min-h-screen bg-navy financial-grid flex items-center justify-center">
+        <div className="text-center space-y-4 animate-fade-in">
+          <div className="flex items-center justify-center text-gold gold-glow rounded-full">
+            <IconChart className="w-10 h-10" />
           </div>
-          <p className="text-dark-500 text-sm">加载中...</p>
+          <h2 className="font-serif text-lg text-gold-gradient tracking-wide">金融猎手</h2>
+          <div className="flex items-center justify-center space-x-1.5">
+            <div className="loading-dot w-2 h-2 bg-gold rounded-full"></div>
+            <div className="loading-dot w-2 h-2 bg-gold rounded-full"></div>
+            <div className="loading-dot w-2 h-2 bg-gold rounded-full"></div>
+          </div>
+          <p className="text-dark-500 text-xs tracking-[0.3em]">LOADING</p>
         </div>
       </div>
     );
@@ -459,16 +553,14 @@ export default function GamePage() {
         <div className="fixed bottom-6 right-6 z-40">
           <button
             onClick={toggleAutoRun}
-            className={`px-6 py-3 rounded-full font-medium text-sm shadow-lg transition-all flex items-center space-x-2 ${
-              isAutoRun
-                ? 'bg-green-500 hover:bg-green-400 text-white'
-                : 'bg-dark-800 hover:bg-dark-700 text-dark-200 border border-dark-600'
+            className={`rounded-full text-sm shadow-lg flex items-center space-x-2 ${
+              isAutoRun ? 'btn-primary' : 'btn-secondary'
             }`}
           >
             {isAutoRun ? (
-              <><span className="w-2 h-2 bg-white rounded-full animate-pulse"></span><span>🤖 自动运行中</span></>
+              <><span className="w-2 h-2 bg-navy rounded-full animate-pulse"></span><span>自动运行中</span></>
             ) : (
-              <><span>▶</span><span>自动运行</span></>
+              <><IconPlay className="w-3.5 h-3.5" /><span>自动运行</span></>
             )}
           </button>
         </div>
@@ -518,7 +610,7 @@ export default function GamePage() {
   // 对话/结果页面 - 新布局
   // ==========================================
   return (
-    <div className="min-h-screen py-4 px-4 relative" style={{ overflow: 'hidden' }}>
+    <div className="min-h-screen py-4 px-4 relative bg-navy" style={{ overflow: 'hidden' }}>
       {/* 背景图片 */}
       <div 
         className="absolute inset-0"
@@ -530,20 +622,23 @@ export default function GamePage() {
         }}
       />
       {/* 遮罩层 */}
-      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(2, 6, 23, 0.75)' }} />
-      
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(10, 22, 40, 0.80)' }} />
+      {/* 金融网格背景 */}
+      <div className="absolute inset-0 financial-grid pointer-events-none" />
+
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* 顶部导航 */}
-        <div className="flex items-center justify-between mb-4 financial-card rounded-xl p-3">
+        {/* 顶部状态栏 */}
+        <div className="flex items-center justify-between mb-4 glass-strong rounded-xl px-4 py-3">
           <div className="flex items-center space-x-3">
-            <button onClick={() => navigate('/lobby')} className="text-dark-400 hover:text-yellow-400 transition-colors flex items-center text-sm">
+            <button onClick={() => navigate('/lobby')} className="btn-ghost flex items-center text-sm">
               <span className="mr-1">←</span> 返回
             </button>
-            <div className="h-5 w-px bg-dark-600"></div>
-            <h1 className="text-lg font-bold text-gold-gradient flex items-center">
-              <span className="mr-1">📈</span> 金融猎手
+            <div className="h-5 w-px bg-gold/20"></div>
+            <h1 className="text-lg font-serif font-bold text-gold-gradient flex items-center">
+              <IconChart className="w-4 h-4 mr-1.5 text-gold" />
+              金融猎手
             </h1>
-            <span className="text-xs text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded">
+            <span className="text-xs text-gold-light bg-gold/10 border border-gold/20 px-2 py-0.5 rounded tracking-wider tabular-nums">
               CASE #{caseCount + 1}
             </span>
           </div>
@@ -551,17 +646,19 @@ export default function GamePage() {
             {/* 勋章显示 */}
             <BadgeDisplay completedCases={caseCount} />
             {characterPair && (
-              <span className={`text-sm ${EMOTION_COLORS[characterPair.currentEmotion]}`}>
-                {EMOTION_ICONS[characterPair.currentEmotion]} {EMOTION_LABELS[characterPair.currentEmotion]}
+              <span className={`text-xs px-2 py-0.5 rounded-md border border-gold/20 glass ${EMOTION_COLORS[characterPair.currentEmotion]}`}>
+                {EMOTION_LABELS[characterPair.currentEmotion]}
               </span>
             )}
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-4 text-red-400 text-sm">
-            {error}
-            <button onClick={() => setError('')} className="ml-2 text-red-300 hover:text-red-200">✕</button>
+          <div className="glass-strong rounded-lg px-4 py-3 mb-4 text-sm flex items-center justify-between" style={{ borderLeft: '3px solid rgba(220, 38, 38, 0.7)' }}>
+            <span className="text-red-300">{error}</span>
+            <button onClick={() => setError('')} className="text-red-300 hover:text-red-200 ml-3 flex items-center">
+              <IconClose className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -573,16 +670,16 @@ export default function GamePage() {
             {currentScenario && (
               <div className="financial-card rounded-xl p-4 flex-shrink-0">
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-sm font-bold text-white flex items-center">
-                    <span className="mr-2 text-yellow-500">📋</span>
+                  <h2 className="text-sm font-serif font-bold text-gold-light flex items-center">
+                    <IconDoc className="w-4 h-4 mr-2 text-gold" />
                     {currentScenario.title}
                   </h2>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-dark-500 bg-dark-800 px-2 py-0.5 rounded">
+                    <span className="text-xs text-dark-400 bg-navy-light/60 border border-gold/10 px-2 py-0.5 rounded">
                       {currentScenario.category}
                     </span>
-                    <span className="text-xs text-yellow-600">
-                      {'⭐'.repeat(currentScenario.difficulty)}
+                    <span className="text-xs text-gold tracking-tight" title={`难度 ${currentScenario.difficulty}`}>
+                      {'★'.repeat(currentScenario.difficulty)}
                     </span>
                   </div>
                 </div>
@@ -590,11 +687,13 @@ export default function GamePage() {
                   {currentScenario.description}
                 </p>
                 {currentScenario.context && (
-                  <div className="mt-2 pt-2 border-t border-dark-700/30">
-                    <p className="text-dark-400 text-xs leading-relaxed line-clamp-2">
-                      📌 {currentScenario.context}
+                  <>
+                    <div className="gold-divider my-2" />
+                    <p className="text-dark-400 text-xs leading-relaxed line-clamp-2 flex items-start">
+                      <IconPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 text-gold/70 flex-shrink-0" />
+                      <span>{currentScenario.context}</span>
                     </p>
-                  </div>
+                  </>
                 )}
               </div>
             )}
@@ -604,73 +703,75 @@ export default function GamePage() {
               {characterPair && (
                 <>
                   {/* 男性角色 */}
-                  <div className="glass rounded-xl p-3">
+                  <div className="financial-card rounded-xl p-3">
                     <div className="flex items-center space-x-2 mb-2">
                       {characterPair.male.avatarUrl ? (
-                        <img src={characterPair.male.avatarUrl} alt={characterPair.male.name} className="w-8 h-8 rounded-lg object-cover border-2 border-blue-400/30" />
+                        <img src={characterPair.male.avatarUrl} alt={characterPair.male.name} className="w-8 h-8 rounded-lg object-cover border-2 border-gold/40" />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-xs">{characterPair.male.name.charAt(0)}</div>
+                        <div className="w-8 h-8 rounded-lg bg-navy-light border border-gold/30 flex items-center justify-center text-gold font-serif font-bold text-xs">{characterPair.male.name.charAt(0)}</div>
                       )}
                       <div>
-                        <h3 className="text-white font-semibold text-xs">{characterPair.male.name}</h3>
+                        <h3 className="text-gold-light font-serif font-semibold text-xs">{characterPair.male.name}</h3>
                         <p className="text-xs text-dark-500">{characterPair.male.career.当前职位}</p>
                       </div>
                     </div>
                     <div className="space-y-1 mb-2">
-                      <AttributeBar label="品格" value={characterPair.male.attributes.品格} color="purple" icon="⚖️" />
-                      <AttributeBar label="情商" value={characterPair.male.attributes.情商} color="pink" icon="💬" />
-                      <AttributeBar label="专业知识" value={characterPair.male.attributes.专业知识} color="blue" icon="📚" />
-                      <AttributeBar label="人脉" value={characterPair.male.attributes.人脉} color="green" icon="🌐" />
-                      <AttributeBar label="抗压" value={characterPair.male.attributes.抗压能力} color="orange" icon="💪" />
-                      <AttributeBar label="运气" value={characterPair.male.attributes.运气} color="yellow" icon="🍀" />
+                      <AttributeBar label="品格" value={characterPair.male.attributes.品格} />
+                      <AttributeBar label="情商" value={characterPair.male.attributes.情商} />
+                      <AttributeBar label="专业知识" value={characterPair.male.attributes.专业知识} />
+                      <AttributeBar label="人脉" value={characterPair.male.attributes.人脉} />
+                      <AttributeBar label="抗压" value={characterPair.male.attributes.抗压能力} />
+                      <AttributeBar label="运气" value={characterPair.male.attributes.运气} />
                     </div>
-                    <div className="pt-2 border-t border-dark-700/30 space-y-1">
-                      <StatusBar label="金钱" value={characterPair.male.status.金钱} icon="💰" />
-                      <StatusBar label="心情" value={characterPair.male.status.心情} icon="😊" />
-                      <StatusBar label="健康" value={characterPair.male.status.健康} icon="❤️" />
-                      <StatusBar label="声望" value={characterPair.male.status.声望} icon="⭐" />
+                    <div className="gold-divider my-2" />
+                    <div className="space-y-1">
+                      <StatusBar label="金钱" value={characterPair.male.status.金钱} />
+                      <StatusBar label="心情" value={characterPair.male.status.心情} />
+                      <StatusBar label="健康" value={characterPair.male.status.健康} />
+                      <StatusBar label="声望" value={characterPair.male.status.声望} />
                     </div>
                   </div>
 
                   {/* 女性角色 */}
-                  <div className="glass rounded-xl p-3">
+                  <div className="financial-card rounded-xl p-3">
                     <div className="flex items-center space-x-2 mb-2">
                       {characterPair.female.avatarUrl ? (
-                        <img src={characterPair.female.avatarUrl} alt={characterPair.female.name} className="w-8 h-8 rounded-lg object-cover border-2 border-pink-400/30" />
+                        <img src={characterPair.female.avatarUrl} alt={characterPair.female.name} className="w-8 h-8 rounded-lg object-cover border-2 border-gold/40" />
                       ) : (
-                        <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-xs">{characterPair.female.name.charAt(0)}</div>
+                        <div className="w-8 h-8 rounded-lg bg-navy-light border border-gold/30 flex items-center justify-center text-gold font-serif font-bold text-xs">{characterPair.female.name.charAt(0)}</div>
                       )}
                       <div>
-                        <h3 className="text-white font-semibold text-xs">{characterPair.female.name}</h3>
+                        <h3 className="text-gold-light font-serif font-semibold text-xs">{characterPair.female.name}</h3>
                         <p className="text-xs text-dark-500">{characterPair.female.career.当前职位}</p>
                       </div>
                     </div>
                     <div className="space-y-1 mb-2">
-                      <AttributeBar label="品格" value={characterPair.female.attributes.品格} color="purple" icon="⚖️" />
-                      <AttributeBar label="情商" value={characterPair.female.attributes.情商} color="pink" icon="💬" />
-                      <AttributeBar label="专业知识" value={characterPair.female.attributes.专业知识} color="blue" icon="📚" />
-                      <AttributeBar label="人脉" value={characterPair.female.attributes.人脉} color="green" icon="🌐" />
-                      <AttributeBar label="抗压" value={characterPair.female.attributes.抗压能力} color="orange" icon="💪" />
-                      <AttributeBar label="运气" value={characterPair.female.attributes.运气} color="yellow" icon="🍀" />
+                      <AttributeBar label="品格" value={characterPair.female.attributes.品格} />
+                      <AttributeBar label="情商" value={characterPair.female.attributes.情商} />
+                      <AttributeBar label="专业知识" value={characterPair.female.attributes.专业知识} />
+                      <AttributeBar label="人脉" value={characterPair.female.attributes.人脉} />
+                      <AttributeBar label="抗压" value={characterPair.female.attributes.抗压能力} />
+                      <AttributeBar label="运气" value={characterPair.female.attributes.运气} />
                     </div>
-                    <div className="pt-2 border-t border-dark-700/30 space-y-1">
-                      <StatusBar label="金钱" value={characterPair.female.status.金钱} icon="💰" />
-                      <StatusBar label="心情" value={characterPair.female.status.心情} icon="😊" />
-                      <StatusBar label="健康" value={characterPair.female.status.健康} icon="❤️" />
-                      <StatusBar label="声望" value={characterPair.female.status.声望} icon="⭐" />
+                    <div className="gold-divider my-2" />
+                    <div className="space-y-1">
+                      <StatusBar label="金钱" value={characterPair.female.status.金钱} />
+                      <StatusBar label="心情" value={characterPair.female.status.心情} />
+                      <StatusBar label="健康" value={characterPair.female.status.健康} />
+                      <StatusBar label="声望" value={characterPair.female.status.声望} />
                     </div>
                   </div>
 
                   {/* 合作关系 */}
-                  <div className="glass rounded-xl p-3">
-                    <h4 className="text-xs font-medium text-dark-400 mb-1.5">合作关系</h4>
+                  <div className="financial-card rounded-xl p-3">
+                    <h4 className="text-xs font-serif font-medium text-gold mb-1.5">合作关系</h4>
                     <div className="grid grid-cols-2 gap-2 text-center">
-                      <div className="bg-dark-800/50 rounded-lg p-1.5">
-                        <div className="text-base font-bold text-green-400">{characterPair.relationship.harmony}</div>
+                      <div className="bg-navy-light/50 border border-gold/10 rounded-lg p-1.5">
+                        <div className="text-base font-serif font-bold text-gold-light tabular-nums">{characterPair.relationship.harmony}</div>
                         <div className="text-xs text-dark-500">和谐度</div>
                       </div>
-                      <div className="bg-dark-800/50 rounded-lg p-1.5">
-                        <div className="text-base font-bold text-blue-400">{characterPair.relationship.trust}</div>
+                      <div className="bg-navy-light/50 border border-gold/10 rounded-lg p-1.5">
+                        <div className="text-base font-serif font-bold text-gold-light tabular-nums">{characterPair.relationship.trust}</div>
                         <div className="text-xs text-dark-500">信任度</div>
                       </div>
                     </div>
@@ -704,28 +805,29 @@ export default function GamePage() {
           <button
             onClick={toggleAutoRun}
             disabled={isGameOver}
-            className={`px-6 py-3 rounded-full font-medium text-sm shadow-lg transition-all flex items-center space-x-2 ${
-              isAutoRun
-                ? 'bg-green-500 hover:bg-green-400 text-white'
-                : 'bg-dark-800 hover:bg-dark-700 text-dark-200 border border-dark-600'
+            className={`rounded-full text-sm shadow-lg flex items-center space-x-2 ${
+              isAutoRun ? 'btn-primary' : 'btn-secondary'
             } ${isGameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isAutoRun ? (
-              <><span className="w-2 h-2 bg-white rounded-full animate-pulse"></span><span>🤖 自动运行中</span></>
+              <><span className="w-2 h-2 bg-navy rounded-full animate-pulse"></span><span>自动运行中</span></>
             ) : (
-              <><span>▶</span><span>自动运行</span></>
+              <><IconPlay className="w-3.5 h-3.5" /><span>自动运行</span></>
             )}
           </button>
         </div>
 
         {/* 游戏结束弹窗 */}
         {isGameOver && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="glass rounded-xl p-8 max-w-md text-center">
-              <div className="text-6xl mb-4">🎮</div>
-              <h2 className="text-2xl font-bold text-white mb-2">游戏结束</h2>
-              <p className="text-dark-400 mb-2">{gameOverReason}</p>
-              <p className="text-dark-500 text-sm mb-6">共完成了 {caseCount} 个案例</p>
+          <div className="fixed inset-0 bg-navy/80 flex items-center justify-center z-50">
+            <div className="glass-strong rounded-xl p-8 max-w-md text-center gold-glow">
+              <div className="flex items-center justify-center text-gold mb-4">
+                <IconChart className="w-12 h-12" />
+              </div>
+              <h2 className="text-2xl font-serif font-bold text-gold-gradient mb-2">游戏结束</h2>
+              <div className="gold-divider mb-4" />
+              <p className="text-dark-300 mb-2">{gameOverReason}</p>
+              <p className="text-dark-500 text-sm mb-6">共完成 <span className="text-gold-light tabular-nums">{caseCount}</span> 个案例</p>
               <div className="flex justify-center space-x-4">
                 <button onClick={() => { setIsGameOver(false); setCaseCount(0); navigate('/lobby'); }} className="btn-primary">
                   重新开始
@@ -743,43 +845,39 @@ export default function GamePage() {
 }
 
 // 6个核心属性条
-function AttributeBar({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) {
-  const colorMap: Record<string, { text: string; bar: string }> = {
-    purple: { text: 'text-purple-400', bar: 'bg-purple-500' },
-    pink: { text: 'text-pink-400', bar: 'bg-pink-500' },
-    blue: { text: 'text-blue-400', bar: 'bg-blue-500' },
-    green: { text: 'text-green-400', bar: 'bg-green-500' },
-    orange: { text: 'text-orange-400', bar: 'bg-orange-500' },
-    yellow: { text: 'text-yellow-400', bar: 'bg-yellow-500' },
-  };
-  const colors = colorMap[color] || colorMap.blue;
+function AttributeBar({ label, value }: { label: string; value: number }) {
   const percentage = Math.min(100, (value / 100) * 100);
 
   return (
-    <div className="flex items-center space-x-1.5">
-      <span className={`text-xs ${colors.text} w-4`}>{icon}</span>
-      <span className="text-xs text-dark-400 w-12">{label}</span>
-      <div className="flex-1 h-1 bg-dark-800 rounded-full overflow-hidden">
-        <div className={`h-full ${colors.bar} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }} />
+    <div className="flex items-center space-x-2">
+      <span className="text-xs text-dark-400 w-14 truncate">{label}</span>
+      <div className="flex-1 attribute-bar">
+        <div className="attribute-bar-fill" style={{ width: `${percentage}%` }} />
       </div>
-      <span className={`text-xs w-6 text-right ${colors.text} font-medium`}>{value}</span>
+      <span className="text-xs w-8 text-right text-gold-light font-medium tabular-nums">{value}</span>
     </div>
   );
 }
 
 // 4个状态属性条
-function StatusBar({ label, value, icon }: { label: string; value: number; icon: string }) {
-  const isLow = value < 30;
-  const isHigh = value > 70;
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  '金钱': <IconCoin className="w-3.5 h-3.5" />,
+  '心情': <IconSmile className="w-3.5 h-3.5" />,
+  '健康': <IconHeart className="w-3.5 h-3.5" />,
+  '声望': <IconStar className="w-3.5 h-3.5" />,
+};
+
+function StatusBar({ label, value }: { label: string; value: number }) {
+  const percentage = Math.min(100, (value / 100) * 100);
 
   return (
-    <div className="flex items-center space-x-1.5">
-      <span className="text-xs text-dark-500 w-4">{icon}</span>
-      <span className="text-xs text-dark-400 w-12">{label}</span>
-      <div className="flex-1 h-1 bg-dark-800 rounded-full overflow-hidden border border-dark-700/30">
-        <div className={`h-full rounded-full transition-all duration-500 ${isLow ? 'bg-red-500' : isHigh ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${Math.min(100, (value / 100) * 100)}%` }} />
+    <div className="flex items-center space-x-2">
+      <span className="text-gold/80 w-3.5 flex-shrink-0 flex items-center justify-center">{STATUS_ICONS[label]}</span>
+      <span className="text-xs text-dark-400 w-10 truncate">{label}</span>
+      <div className="flex-1 attribute-bar">
+        <div className="attribute-bar-fill" style={{ width: `${percentage}%` }} />
       </div>
-      <span className={`text-xs w-6 text-right font-medium ${isLow ? 'text-red-400' : isHigh ? 'text-green-400' : 'text-yellow-400'}`}>{value}</span>
+      <span className="text-xs w-8 text-right text-gold-light font-medium tabular-nums">{value}</span>
     </div>
   );
 }
@@ -795,21 +893,27 @@ function BadgeDisplay({ completedCases }: { completedCases: number }) {
   return (
     <div className="flex items-center space-x-2">
       {currentBadge ? (
-        <div className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg ${currentBadge.bgColor} border border-${currentBadge.color.split('-')[1]}-500/30`}>
-          <span className="text-base">{currentBadge.icon}</span>
-          <span className={`text-xs font-medium ${currentBadge.color}`}>{currentBadge.name}</span>
+        <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-gold/10 border border-gold/30 gold-glow">
+          <IconMedal className="w-4 h-4 text-gold-light" />
+          <span className="text-xs font-serif font-medium text-gold-gradient">{currentBadge.name}</span>
         </div>
       ) : (
-        <div className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-dark-800/50 border border-dark-600">
-          <span className="text-base">🏅</span>
-          <span className="text-xs text-dark-400">未获得勋章</span>
+        <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-navy-light/50 border border-gold/15">
+          <IconMedal className="w-4 h-4 text-dark-500" />
+          <span className="text-xs text-dark-400">未获得段位</span>
         </div>
       )}
-      
+
       {nextBadge && (
-        <div className="hidden sm:flex items-center space-x-1 text-xs text-dark-500">
-          <span>→</span>
-          <span>{nextBadge.requiredCases - completedCases}关后{nextBadge.name}</span>
+        <div className="hidden sm:flex flex-col gap-1 text-xs text-dark-500">
+          <div className="flex items-center space-x-1">
+            <span className="text-gold/60">→</span>
+            <span className="tabular-nums">{nextBadge.requiredCases - completedCases}</span>
+            <span>关后 {nextBadge.name}</span>
+          </div>
+          <div className="w-28 attribute-bar">
+            <div className="attribute-bar-fill" style={{ width: `${progress}%` }} />
+          </div>
         </div>
       )}
     </div>
@@ -822,36 +926,39 @@ function QualificationDisplay({ caseCount }: { caseCount: number }) {
   const next = getNextQualification(caseCount);
 
   return (
-    <div className="glass rounded-xl p-3">
-      <h4 className="text-xs font-medium text-dark-400 mb-2">职业资质</h4>
-      
+    <div className="financial-card rounded-xl p-3">
+      <h4 className="text-xs font-serif font-medium text-gold mb-2">职业资质</h4>
+
       {/* 已解锁资质 */}
       {unlocked.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {unlocked.map((q) => (
             <div
               key={q.id}
-              className={`flex items-center space-x-1 px-2 py-1 rounded-lg ${q.bgColor} border border-opacity-30`}
-              style={{ borderColor: 'currentColor' }}
+              className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-gold/10 border border-gold/30"
             >
-              <span className="text-sm">{q.icon}</span>
-              <span className={`text-xs font-medium ${q.color}`}>{q.name}</span>
+              <IconCert className="w-3.5 h-3.5 text-gold-light" />
+              <span className="text-xs font-medium text-gold-light">{q.name}</span>
             </div>
           ))}
         </div>
       )}
-      
+
       {/* 下一个待解锁 */}
       {next && (
-        <div className="text-xs text-dark-500">
-          <span className="text-dark-400">{next.requiredCases - caseCount}关后解锁: </span>
-          <span className="text-dark-300">{next.icon} {next.name}</span>
+        <div className="text-xs text-dark-500 flex items-center">
+          <span className="text-dark-400 tabular-nums">{next.requiredCases - caseCount}</span>
+          <span className="mx-1">关后解锁:</span>
+          <span className="text-gold/80">{next.name}</span>
         </div>
       )}
-      
+
       {/* 全部解锁 */}
       {!next && unlocked.length > 0 && (
-        <div className="text-xs text-green-400">🎉 已获得全部资质</div>
+        <div className="text-xs text-gold-light flex items-center">
+          <IconCheck className="w-3.5 h-3.5 mr-1" />
+          已获得全部资质
+        </div>
       )}
     </div>
   );

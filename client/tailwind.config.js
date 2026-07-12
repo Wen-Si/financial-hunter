@@ -32,29 +32,48 @@ export default {
           900: '#0f172a',
           950: '#020617',
         },
+        navy: {
+          DEFAULT: '#0a1628',
+          light: '#13243d',
+          mid: '#1a2f4e',
+        },
         gold: {
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
-        }
+          light: '#e6c34d',
+          DEFAULT: '#c9a227',
+          dark: '#9a7d1c',
+          50: '#fdf9ed',
+          100: '#faf0d0',
+          200: '#f5e09c',
+          300: '#e6c34d',
+          400: '#c9a227',
+          500: '#9a7d1c',
+          600: '#7a6316',
+          700: '#5e4d12',
+        },
       },
       fontFamily: {
         sans: ['"Noto Sans SC"', '"PingFang SC"', 'system-ui', 'sans-serif'],
+        serif: ['"Noto Serif SC"', '"Georgia"', '"Songti SC"', 'serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 3s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
+        'ticker': 'tickerScroll 30s linear infinite',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
+          '50%': { transform: 'translateY(-8px)' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 5px rgba(234, 179, 8, 0.2)' },
-          '100%': { boxShadow: '0 0 20px rgba(234, 179, 8, 0.6)' },
-        }
+          '0%': { boxShadow: '0 0 8px rgba(201, 162, 39, 0.15)' },
+          '100%': { boxShadow: '0 0 24px rgba(201, 162, 39, 0.35)' },
+        },
+        tickerScroll: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       }
     },
   },

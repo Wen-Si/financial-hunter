@@ -3,6 +3,18 @@
 // 共210个真实金融案例改编的游戏场景
 // ==========================================
 
+import { Scenario, AvatarAttributes, Status } from '../types';
+
+interface ScenarioWithOutcomes extends Scenario {
+  outcomes: Record<string, {
+    description: string;
+    attributesChange: Partial<AvatarAttributes>;
+    statusChange: Partial<Status>;
+  }>;
+  narrativeElements?: any;
+  [key: string]: any;
+}
+
 export const financialHistoryScenarios: ScenarioWithOutcomes[] = [
   {
     id: 'case_1',

@@ -69,8 +69,8 @@ export default function CaseTransition({
 
   const canStart = !isStreaming && (!scenario.choices || scenario.choices.length === 0 || selectedChoiceId !== null);
 
-  // 难度星星
-  const difficultyStars = '⭐'.repeat(scenario.difficulty);
+  // 难度等级（金色圆点，替代 emoji 星星）
+  const difficultyDots = Array.from({ length: scenario.difficulty });
 
   // 分类标签颜色
   const categoryColors: Record<string, string> = {
@@ -100,36 +100,45 @@ export default function CaseTransition({
       
       <div className="max-w-3xl w-full relative z-10">
         {/* 顶部标题 */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 animate-fade-in">
           <div className="inline-flex items-center space-x-3 mb-4">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-500/50"></div>
-            <span className="text-xs text-yellow-600 tracking-widest uppercase">Case #{caseNumber}</span>
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-yellow-500/50"></div>
+            <div className="h-px w-16 bg-gradient-to-r from-transparent to-gold/50"></div>
+            <span className="text-xs text-gold tracking-widest uppercase tabular-nums">Case #{caseNumber}</span>
+            <div className="h-px w-16 bg-gradient-to-l from-transparent to-gold/50"></div>
           </div>
-          <h1 className="text-3xl font-bold text-gold-gradient mb-3">挑战下一关</h1>
+          <h1 className="text-3xl font-bold font-serif text-gold-gradient mb-3">挑战下一关</h1>
           <div className="flex items-center justify-center space-x-3">
             <span className={`text-xs px-3 py-1 rounded-full border ${categoryColors[scenario.category] || 'bg-dark-800 text-dark-400 border-dark-600'}`}>
               {scenario.category}
             </span>
-            <span className="text-xs text-yellow-500">{difficultyStars}</span>
+            <span className="flex items-center space-x-1.5">
+              <span className="text-xs text-dark-400">难度</span>
+              <span className="flex items-center space-x-1">
+                {difficultyDots.map((_, i) => (
+                  <span key={i} className="w-1.5 h-1.5 rounded-full bg-gold inline-block" />
+                ))}
+              </span>
+            </span>
           </div>
         </div>
 
         {/* 案例标题 */}
-        <div className="financial-card rounded-xl p-6 mb-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-            <span className="mr-3 text-yellow-500">📋</span>
-            {scenario.title}
+        <div className="financial-card rounded-xl p-6 mb-6 animate-slide-in">
+          <h2 className="text-xl font-bold mb-4 flex items-center space-x-3">
+            <svg className="w-5 h-5 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+              <path d="M8 13h8M8 17h8M8 9h2" />
+            </svg>
+            <span className="font-serif text-gold-gradient">{scenario.title}</span>
           </h2>
 
           {/* 流式输出的案例详情 */}
           <div className="min-h-[200px]">
-            <div className="bg-dark-800/50 rounded-lg p-5 border border-dark-700/30">
+            <div className="glass-strong rounded-lg p-5">
               <p className="text-dark-200 text-sm leading-relaxed whitespace-pre-wrap">
                 {introText}
-                {isStreaming && (
-                  <span className="inline-block w-0.5 h-4 bg-yellow-400 ml-0.5 animate-pulse align-middle" />
-                )}
+                {isStreaming && <span className="streaming-cursor" />}
               </p>
             </div>
           </div>
@@ -137,11 +146,16 @@ export default function CaseTransition({
 
         {/* 可选方向 - 玩家需要选择 */}
         {scenario.choices && scenario.choices.length > 0 && (
-          <div className="financial-card rounded-xl p-5 mb-8">
-            <h3 className="text-sm font-medium text-yellow-500/80 mb-3 flex items-center">
-              <span className="mr-2">🎯</span> 请选择你的方向
+          <div className="financial-card rounded-xl p-5 mb-8 animate-slide-in">
+            <h3 className="text-sm font-medium text-gold/80 mb-3 flex items-center space-x-2">
+              <svg className="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" />
+                <circle cx="12" cy="12" r="5" />
+                <circle cx="12" cy="12" r="1" fill="currentColor" />
+              </svg>
+              <span>请选择你的方向</span>
               {!selectedChoiceId && !isStreaming && (
-                <span className="ml-2 text-xs text-dark-400">（点击选择）</span>
+                <span className="text-xs text-dark-400">（点击选择）</span>
               )}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -154,18 +168,20 @@ export default function CaseTransition({
                     disabled={isStreaming}
                     className={`text-left rounded-lg px-4 py-3 text-sm flex items-start space-x-3 transition-all ${
                       isSelected
-                        ? 'bg-yellow-500/20 border-2 border-yellow-500 text-yellow-300 shadow-lg shadow-yellow-500/10'
+                        ? 'card-hover border-2 border-gold bg-gold/10 text-gold-light shadow-lg shadow-gold/10'
                         : isStreaming
-                          ? 'bg-dark-800/30 border border-dark-700/30 text-dark-500 cursor-not-allowed'
-                          : 'bg-dark-800/30 border border-dark-700/30 text-dark-300 hover:border-yellow-500/50 hover:bg-dark-800/50 cursor-pointer'
+                          ? 'financial-card opacity-60 cursor-not-allowed text-dark-500'
+                          : 'financial-card card-hover cursor-pointer text-dark-300'
                     }`}
                   >
-                    <span className={`font-bold mt-0.5 ${isSelected ? 'text-yellow-400' : 'text-yellow-500/60'}`}>
+                    <span className={`font-bold mt-0.5 ${isSelected ? 'text-gold-light' : 'text-gold/60'}`}>
                       {String.fromCharCode(65 + index)}
                     </span>
                     <span className="leading-relaxed">{choice.text}</span>
                     {isSelected && (
-                      <span className="ml-auto text-yellow-400 flex-shrink-0">✓</span>
+                      <svg className="ml-auto w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M5 13l4 4L19 7" />
+                      </svg>
                     )}
                   </button>
                 );
@@ -179,29 +195,19 @@ export default function CaseTransition({
           <button
             onClick={handleStart}
             disabled={!canStart}
-            className={`px-8 py-3 rounded-xl font-medium text-sm transition-all ${
-              !canStart
-                ? 'bg-dark-800 text-dark-500 cursor-not-allowed border border-dark-700'
-                : 'bg-gradient-to-r from-yellow-500 to-amber-500 text-dark-950 hover:from-yellow-400 hover:to-amber-400 shadow-lg shadow-yellow-500/20'
-            }`}
+            className="btn-primary text-lg"
           >
             {isStreaming ? (
               <span className="flex items-center space-x-2">
-                <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-                <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-                <span className="loading-dot w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
+                <span className="loading-dot w-1.5 h-1.5 bg-navy rounded-full"></span>
+                <span className="loading-dot w-1.5 h-1.5 bg-navy rounded-full"></span>
+                <span className="loading-dot w-1.5 h-1.5 bg-navy rounded-full"></span>
                 <span className="ml-2">案例加载中...</span>
               </span>
             ) : !selectedChoiceId && scenario.choices && scenario.choices.length > 0 ? (
-              <span className="flex items-center space-x-2">
-                <span>🎯</span>
-                <span>请先选择方向</span>
-              </span>
+              <span>请先选择方向</span>
             ) : (
-              <span className="flex items-center space-x-2">
-                <span>⚔️</span>
-                <span>开始挑战</span>
-              </span>
+              <span>开始挑战</span>
             )}
           </button>
         </div>

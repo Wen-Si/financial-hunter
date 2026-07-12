@@ -60,14 +60,8 @@ export const avatarAPI = {
   },
 
   create: (name: string, characterDescription: string): Promise<{ data: { message: string; avatar: Avatar } }> => {
-    const user = localService.getCurrentUser();
-    if (!user) return Promise.reject(new Error('未登录'));
-
-    // Use AI to parse character description
-    return aiService.parseCharacterDescription(characterDescription).then((parsed) => {
-      return localService.createAvatar(user.id, name, characterDescription, parsed.attributes, parsed.career)
-        .then((result) => ({ data: result }));
-    });
+    // 旧的单角色创建接口已废弃，重定向到角色对创建
+    return Promise.reject(new Error('请使用 createCharacterPair 创建角色'));
   },
 
   // 创建角色对（男性+女性）
@@ -267,7 +261,7 @@ export const gameAPI = {
 
   start: (avatarId: string): Promise<{ data: GameStartResponse }> => {
     // 兼容旧接口，尝试使用角色对
-    return this.startWithPair();
+    return gameAPI.startWithPair();
   },
 
   getCurrent: (avatarId: string): Promise<{ data: { currentScenario: Scenario | null; avatar: Avatar } }> => {
@@ -276,7 +270,7 @@ export const gameAPI = {
 
     let currentScenario: Scenario | null = null;
     if (avatar.currentScenario) {
-      const found = scenarioService.scenarios.find((s) => s.id === avatar.currentScenario);
+      const found = scenarioService.scenarios.find((s: any) => s.id === avatar.currentScenario);
       if (found) {
         const { outcomes, ...rest } = found;
         currentScenario = rest as Scenario;

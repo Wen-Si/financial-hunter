@@ -1,14 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-gold: #eab308;
-  --color-dark-bg: #0f172a;
+  --color-gold: #c9a227;
+  --color-gold-light: #e6c34d;
+  --color-gold-dark: #9a7d1c;
+  --color-navy: #0a1628;
+  --color-navy-light: #13243d;
+  --color-navy-mid: #1a2f4e;
   --color-financial-blue: #1e3a5f;
-  --color-financial-gold: #c9a227;
   --color-financial-green: #059669;
   --color-financial-red: #dc2626;
+  --color-ivory: #f5f0e1;
+  --color-slate: #94a3b8;
 }
 
 * {
@@ -19,92 +26,171 @@
 
 body {
   font-family: 'Noto Sans SC', 'PingFang SC', system-ui, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  background: #0a1628;
   min-height: 100vh;
   color: #e2e8f0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 自定义滚动条 */
+/* ========== Typography ========== */
+.font-serif {
+  font-family: 'Noto Serif SC', 'Georgia', 'Songti SC', serif;
+}
+
+/* ========== Scrollbar ========== */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: rgba(10, 22, 40, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 3px;
+  background: rgba(201, 162, 39, 0.3);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: rgba(201, 162, 39, 0.5);
 }
 
-/* 金色渐变文字 */
+/* ========== Gold Text ========== */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  background: linear-gradient(135deg, #e6c34d 0%, #c9a227 50%, #9a7d1c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* 玻璃效果 */
-.glass {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+.text-gold {
+  color: #c9a227;
 }
 
-/* 卡片悬停效果 */
+.text-gold-light {
+  color: #e6c34d;
+}
+
+/* ========== Glass Effect ========== */
+.glass {
+  background: rgba(19, 36, 61, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 162, 39, 0.08);
+}
+
+.glass-strong {
+  background: rgba(10, 22, 40, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 162, 39, 0.12);
+}
+
+/* ========== Financial Card ========== */
+.financial-card {
+  background: linear-gradient(145deg, rgba(19, 36, 61, 0.7) 0%, rgba(10, 22, 40, 0.9) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.financial-card:hover {
+  border-color: rgba(201, 162, 39, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(201, 162, 39, 0.08);
+}
+
+/* ========== Card Hover ========== */
 .card-hover {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  border-color: rgba(234, 179, 8, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(201, 162, 39, 0.25);
 }
 
-/* 按钮样式 */
+/* ========== Buttons ========== */
 .btn-primary {
-  @apply px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 text-dark-950 font-bold rounded-lg
-    hover:from-yellow-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-yellow-500/25;
+  @apply px-6 py-3 font-medium rounded-lg transition-all duration-300;
+  background: linear-gradient(135deg, #c9a227 0%, #9a7d1c 100%);
+  color: #0a1628;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(201, 162, 39, 0.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #e6c34d 0%, #c9a227 100%);
+  box-shadow: 0 6px 24px rgba(201, 162, 39, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-secondary {
-  @apply px-6 py-3 bg-dark-700 text-white font-medium rounded-lg border border-dark-600
-    hover:bg-dark-600 hover:border-dark-500 transition-all duration-300;
+  @apply px-6 py-3 font-medium rounded-lg transition-all duration-300;
+  background: rgba(19, 36, 61, 0.6);
+  color: #e2e8f0;
+  border: 1px solid rgba(201, 162, 39, 0.15);
 }
 
-.btn-danger {
-  @apply px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold rounded-lg
-    hover:from-red-500 hover:to-rose-500 transition-all duration-300;
+.btn-secondary:hover {
+  background: rgba(26, 47, 78, 0.8);
+  border-color: rgba(201, 162, 39, 0.3);
 }
 
-/* 输入框样式 */
+.btn-ghost {
+  @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300;
+  color: #94a3b8;
+}
+
+.btn-ghost:hover {
+  color: #c9a227;
+  background: rgba(201, 162, 39, 0.06);
+}
+
+/* ========== Input Fields ========== */
 .input-field {
-  @apply w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-lg text-white
-    placeholder-dark-400 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500
-    transition-all duration-300;
+  @apply w-full px-4 py-3 rounded-lg transition-all duration-300;
+  background: rgba(10, 22, 40, 0.6);
+  border: 1px solid rgba(201, 162, 39, 0.1);
+  color: #e2e8f0;
+  font-size: 14px;
 }
 
-/* 属性条 */
+.input-field::placeholder {
+  color: #475569;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: rgba(201, 162, 39, 0.4);
+  background: rgba(10, 22, 40, 0.8);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.08);
+}
+
+/* ========== Attribute Bars ========== */
 .attribute-bar {
-  @apply h-2 rounded-full bg-dark-700 overflow-hidden;
+  @apply h-1.5 rounded-full overflow-hidden;
+  background: rgba(10, 22, 40, 0.8);
 }
 
 .attribute-bar-fill {
-  @apply h-full rounded-full transition-all duration-500 ease-out;
+  @apply h-full rounded-full transition-all duration-700 ease-out;
+  background: linear-gradient(90deg, #9a7d1c, #c9a227, #e6c34d);
 }
 
-/* 动画 */
+/* ========== Animations ========== */
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -113,7 +199,16 @@ body {
 }
 
 .animate-slide-in {
-  animation: slideIn 0.5s ease-out forwards;
+  animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
 }
 
 @keyframes typewriter {
@@ -122,10 +217,10 @@ body {
 }
 
 .animate-typewriter {
-  animation: typewriter 0.5s ease-out forwards;
+  animation: typewriter 0.4s ease-out forwards;
 }
 
-/* 加载动画 */
+/* Loading dots */
 .loading-dot {
   animation: loadingDot 1.4s infinite ease-in-out both;
 }
@@ -136,7 +231,7 @@ body {
 @keyframes loadingDot {
   0%, 80%, 100% {
     transform: scale(0);
-    opacity: 0.5;
+    opacity: 0.3;
   }
   40% {
     transform: scale(1);
@@ -144,18 +239,43 @@ body {
   }
 }
 
-/* 游戏日志滚动 */
-.game-log {
-  max-height: 400px;
-  overflow-y: auto;
+/* ========== Stock Ticker ========== */
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-/* 金融主题装饰 */
-.financial-border {
-  border: 1px solid linear-gradient(135deg, rgba(201, 162, 39, 0.3), rgba(30, 58, 95, 0.3));
+.ticker-scroll {
+  animation: tickerScroll 30s linear infinite;
 }
 
-/* 股票行情风格闪烁 */
+/* ========== Financial Grid Background ========== */
+.financial-grid {
+  background-image: 
+    linear-gradient(rgba(201, 162, 39, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 162, 39, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ========== Background Pattern ========== */
+.bg-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(201, 162, 39, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(30, 58, 95, 0.06) 0%, transparent 40%);
+}
+
+/* ========== Gold Glow ========== */
+.gold-glow {
+  box-shadow: 0 0 24px rgba(201, 162, 39, 0.15), 0 0 48px rgba(201, 162, 39, 0.05);
+}
+
+/* ========== Divider ========== */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.3), transparent);
+}
+
+/* ========== Stock Indicators ========== */
 @keyframes stockUp {
   0%, 100% { color: #10b981; }
   50% { color: #34d399; }
@@ -174,37 +294,39 @@ body {
   animation: stockDown 2s ease-in-out infinite;
 }
 
-/* 金融数据卡片 */
-.financial-card {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
-  border: 1px solid rgba(201, 162, 39, 0.15);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.financial-card:hover {
-  border-color: rgba(201, 162, 39, 0.3);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(201, 162, 39, 0.1);
-}
-
-/* 金色光晕效果 */
-.gold-glow {
-  box-shadow: 0 0 20px rgba(234, 179, 8, 0.3), 0 0 40px rgba(234, 179, 8, 0.1);
-}
-
-/* 金融图表网格背景 */
-.financial-grid {
-  background-image: 
-    linear-gradient(rgba(201, 162, 39, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(201, 162, 39, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* ========== Game Log ========== */
+.game-log {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .game-log::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 
-/* 背景装饰 */
-.bg-pattern {
-  background-image: radial-gradient(circle at 25% 25%, rgba(234, 179, 8, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 75% 75%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+/* ========== Streaming Cursor ========== */
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.streaming-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #c9a227;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: cursorBlink 1s steps(2) infinite;
+}
+
+/* ========== Selection ========== */
+::selection {
+  background: rgba(201, 162, 39, 0.25);
+  color: #f5f0e1;
+}
+
+/* ========== Number Tabular ========== */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

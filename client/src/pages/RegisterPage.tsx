@@ -46,22 +46,38 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative">
-      {/* 背景装饰 */}
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* 金融网格背景 */}
+      <div className="absolute inset-0 financial-grid pointer-events-none" />
+      {/* 背景纹理 */}
+      <div className="absolute inset-0 bg-pattern pointer-events-none" />
+      {/* 背景装饰光晕 */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 left-1/3 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-gold/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 left-1/3 w-72 h-72 bg-navy-mid/30 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10 animate-slide-in">
+        {/* Logo 标识 */}
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-gold-light to-gold-dark shadow-lg border border-gold/30 animate-glow">
+            <span className="font-serif text-2xl font-bold text-navy">FH</span>
+          </div>
+        </div>
+
         {/* 标题 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gold-gradient mb-2">创建账号</h1>
-          <p className="text-dark-400">加入金融猎手，开启你的职场冒险</p>
+          <h1 className="text-3xl font-bold text-gold-gradient mb-3 font-serif tracking-wide">
+            创建账号
+          </h1>
+          <div className="flex items-center justify-center">
+            <div className="gold-divider w-24" />
+          </div>
+          <p className="text-dark-400 mt-3">加入金融猎手，开启你的职场冒险</p>
         </div>
 
         {/* 注册表单卡片 */}
-        <div className="glass rounded-2xl p-8 shadow-2xl">
+        <div className="glass-strong rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 错误提示 */}
             {error && (
@@ -156,9 +172,9 @@ const RegisterPage: React.FC = () => {
 
           {/* 分割线 */}
           <div className="mt-6 flex items-center">
-            <div className="flex-1 border-t border-dark-700" />
-            <span className="px-4 text-xs text-dark-500">或</span>
-            <div className="flex-1 border-t border-dark-700" />
+            <div className="flex-1 gold-divider" />
+            <span className="px-4 text-xs text-dark-500 font-serif">或</span>
+            <div className="flex-1 gold-divider" />
           </div>
 
           {/* 登录链接 */}
@@ -167,7 +183,7 @@ const RegisterPage: React.FC = () => {
               已有账号？{' '}
               <Link
                 to="/login"
-                className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-300"
+                className="text-gold-light hover:text-gold font-medium transition-colors duration-300"
               >
                 去登录
               </Link>
