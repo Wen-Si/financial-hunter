@@ -1,41 +1,6 @@
 import { Avatar, AvatarAttributes, Career, Status, Scenario, Choice, GameEvent, CharacterPair, EmotionType } from '../types';
-
-const GLM_API_KEY = '7b8a15f57d2941a69fcce60f49f7c6ff.SiMrZjCdyOmdtzLr';
-const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-
-// ==========================================
-// GLM API call helper
-// ==========================================
-async function callGLM(messages: { role: string; content: string }[], temperature: number = 0.8): Promise<string | null> {
-  try {
-    const response = await fetch(GLM_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${GLM_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'glm-4-flash',
-        messages,
-        temperature: temperature, // 使用传入的温度参数，增加随机性
-        max_tokens: 1500,
-      }),
-    });
-
-    if (!response.ok) {
-      console.warn('GLM API call failed:', response.status, response.statusText);
-      return null;
-    }
-
-    const data = await response.json();
-    const message = data.choices?.[0]?.message;
-    // 只取正式回答，忽略思考过程
-    return message?.content || null;
-  } catch (err) {
-    console.warn('GLM API call error:', err);
-    return null;
-  }
-}
+// 使用NVIDIA多模型API（GLM-5.2 / DeepSeek-V4 / Kimi-K2.6 / MiniMax-M3），支持自动降级
+import { callGLM } from './streamService';
 
 // ==========================================
 // Parse character description

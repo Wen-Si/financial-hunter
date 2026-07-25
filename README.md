@@ -56,7 +56,7 @@ services:
   server:
     environment:
       - JWT_SECRET=your_jwt_secret_key_here
-      - GLM_API_KEY=your_glm_api_key_here  # 替换为你的智谱AI API Key
+      - NVIDIA_API_KEY=your_nvidia_api_key_here  # 替换为你的NVIDIA API Key
 ```
 
 3. 启动服务
@@ -120,7 +120,7 @@ npm install
 ```env
 PORT=3000
 JWT_SECRET=your_jwt_secret_key_here
-GLM_API_KEY=your_glm_api_key_here
+NVIDIA_API_KEY=your_nvidia_api_key_here
 ```
 
 4. 启动后端
@@ -143,13 +143,18 @@ npm run dev
 
 ## 如何获取 API Key
 
-### 智谱AI GLM API Key
+### NVIDIA AI API Key
 
-1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
-2. 注册/登录账号
-3. 进入控制台 -> API Keys -> 创建新密钥
-4. 复制生成的 API Key
-5. 将 API Key 填入环境变量 `GLM_API_KEY`
+1. 访问 [NVIDIA AI Models](https://developer.nvidia.com/ai-models)
+2. 注册/登录 NVIDIA Developer 账号
+3. 进入 API Testing 页面，获取 API Key（格式为 `nvapi-xxx`）
+4. 将 API Key 填入环境变量 `NVIDIA_API_KEY`
+
+**支持的模型**：
+- `z-ai/glm-5.2` — 主力流式模型（GLM升级版）
+- `deepseek-ai/deepseek-v4-flash` — DeepSeek推理模型
+- `moonshotai/kimi-k2.6` — Kimi长文本模型
+- `minimaxai/minimax-m3` — MiniMax备用模型
 
 **注意**: 请妥善保管你的 API Key，不要泄露给他人或提交到代码仓库。
 

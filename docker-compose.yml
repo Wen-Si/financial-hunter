@@ -9,7 +9,7 @@ services:
     environment:
       - PORT=3000
       - JWT_SECRET=your_jwt_secret_key_here
-      - GLM_API_KEY=7b8a15f57d2941a69fcce60f49f7c6ff.SiMrZjCdyOmdtzLr
+      - NVIDIA_API_KEY=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
     volumes:
       - ./database:/app/database
 

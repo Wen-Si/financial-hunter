@@ -178,14 +178,20 @@
 
 ## 5. AI引擎设计
 
-### 5.1 GLM-4.5-Flash集成
-- **API Endpoint**: `https://open.bigmodel.cn/api/paas/v4/chat/completions`
-- **Model**: `glm-4.5-flash`
+### 5.1 NVIDIA多模型集成
+- **API Endpoint**: `https://integrate.api.nvidia.com/v1/chat/completions`
+- **集成模型**:
+  - `z-ai/glm-5.2` — 主力流式模型（GLM升级版）
+  - `deepseek-ai/deepseek-v4-flash` — DeepSeek推理模型
+  - `moonshotai/kimi-k2.6` — Kimi长文本模型
+  - `minimaxai/minimax-m3` — MiniMax备用模型
+- **多模型降级**: 主模型失败时自动按优先级切换到备选模型
 - **用途**: 
   - 解析玩家自然语言角色设定
   - 生成AI决策和行动
   - 评估场景结果
   - 推进游戏剧情
+  - 流式生成多轮对话
 
 ### 5.2 AI决策流程
 ```

@@ -59,14 +59,86 @@ export async function parseCharacterDescription(description: string): Promise<Av
   return defaultAttributes;
 }
 
+// ==========================================
+// NVIDIA API 多模型配置
+// 集成 GLM-5.2 / DeepSeek-V4-Pro / DeepSeek-V4-Flash / Kimi-K2.6 / MiniMax-M3
+// ==========================================
+const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || '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';
+const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const REQUEST_TIMEOUT_MS = 30000;
+
+const NVIDIA_MODELS = {
+  DEEPSEEK_V4_PRO: 'deepseek-ai/deepseek-v4-pro',
+  GLM_5_2: 'z-ai/glm-5.2',
+  DEEPSEEK_V4: 'deepseek-ai/deepseek-v4-flash',
+  KIMI_K2: 'moonshotai/kimi-k2.6',
+  MINIMAX_M3: 'minimaxai/minimax-m3',
+} as const;
+
+// 候选模型列表（按优先级排列，主模型失败自动降级到备选）
+const SERVER_MODEL_FALLBACK = [
+  NVIDIA_MODELS.DEEPSEEK_V4_PRO,
+  NVIDIA_MODELS.KIMI_K2,
+  NVIDIA_MODELS.DEEPSEEK_V4,
+  NVIDIA_MODELS.GLM_5_2,
+  NVIDIA_MODELS.MINIMAX_M3,
+];
+
+// 调用NVIDIA API（支持多模型自动降级）
+async function callNVIDIA(
+  messages: { role: string; content: string }[],
+  temperature: number = 0.8,
+  maxTokens: number = 500
+): Promise<string | null> {
+  for (const model of SERVER_MODEL_FALLBACK) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(NVIDIA_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${NVIDIA_API_KEY}`,
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature,
+          max_tokens: maxTokens,
+          stream: false,
+          top_p: 0.95,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn(`NVIDIA API [${model}] error:`, response.status, response.statusText);
+        continue;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        return content;
+      }
+      console.warn(`NVIDIA API [${model}] returned empty content`);
+    } catch (err) {
+      console.warn(`NVIDIA API [${model}] exception:`, err);
+    }
+  }
+  return null;
+}
+
 // 生成AI行动
 export async function generateAIAction(
   avatar: Avatar,
   scenario: Scenario,
   history: { scenarioId: string; action: string }[]
 ): Promise<{ action: string; reasoning: string; selectedChoice?: Choice }> {
-  const apiKey = process.env.GLM_API_KEY || '7b8a15f57d2941a69fcce60f49f7c6ff.SiMrZjCdyOmdtzLr';
-
   const systemPrompt = `你是"金融猎手"游戏的AI引擎。你的任务是模拟一个金融从业者在复杂职场环境中的决策过程。
 
 当前数字人的角色设定：
@@ -106,53 +178,37 @@ ${scenario.choices.map((choice, index) => `${index + 1}. ${choice.text}`).join('
 `;
 
   try {
-    const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'glm-4-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      })
-    });
+    const content = await callNVIDIA([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ], 0.7, 500);
 
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status}`);
+    if (content) {
+      // 解析AI的决策
+      const choiceMatch = content.match(/选择[：:]\s*(\d+)/);
+      const selectedIndex = choiceMatch ? parseInt(choiceMatch[1]) - 1 : Math.floor(Math.random() * scenario.choices.length);
+      const selectedChoice = scenario.choices[selectedIndex] || scenario.choices[0];
+
+      const reasoningMatch = content.match(/理由[：:]\s*([\s\S]*?)(?:$|(?=\n\n))/);
+      const reasoning = reasoningMatch ? reasoningMatch[1].trim() : '根据当前情况做出的决策';
+
+      return {
+        action: selectedChoice.text,
+        reasoning,
+        selectedChoice
+      };
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-
-    // 解析AI的决策
-    const choiceMatch = content.match(/选择[：:]\s*(\d+)/);
-    const selectedIndex = choiceMatch ? parseInt(choiceMatch[1]) - 1 : Math.floor(Math.random() * scenario.choices.length);
-    const selectedChoice = scenario.choices[selectedIndex] || scenario.choices[0];
-
-    const reasoningMatch = content.match(/理由[：:]\s*([\s\S]*?)(?:$|(?=\n\n))/);
-    const reasoning = reasoningMatch ? reasoningMatch[1].trim() : '根据当前情况做出的决策';
-
-    return {
-      action: selectedChoice.text,
-      reasoning,
-      selectedChoice
-    };
   } catch (error) {
     console.error('AI行动生成失败，使用随机选择:', error);
-    // 如果API调用失败，使用随机选择
-    const randomIndex = Math.floor(Math.random() * scenario.choices.length);
-    return {
-      action: scenario.choices[randomIndex].text,
-      reasoning: '由于AI服务暂时不可用，采用默认决策策略',
-      selectedChoice: scenario.choices[randomIndex]
-    };
   }
+
+  // 如果所有模型都失败，使用随机选择
+  const randomIndex = Math.floor(Math.random() * scenario.choices.length);
+  return {
+    action: scenario.choices[randomIndex].text,
+    reasoning: '由于AI服务暂时不可用，采用默认决策策略',
+    selectedChoice: scenario.choices[randomIndex]
+  };
 }
 
 // 评估结果
