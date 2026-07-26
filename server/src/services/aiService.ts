@@ -61,27 +61,31 @@ export async function parseCharacterDescription(description: string): Promise<Av
 
 // ==========================================
 // NVIDIA API 多模型配置
-// 集成 GLM-5.2 / DeepSeek-V4-Pro / DeepSeek-V4-Flash / Kimi-K2.6 / MiniMax-M3
+// 集成 MiniMax-M3 / DeepSeek-V4-Flash / GLM-5.2 / DeepSeek-V4-Pro
+// 根据实测结果调整优先级，移除Kimi-K2.6（账号404）
 // ==========================================
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || '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';
 const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
-const REQUEST_TIMEOUT_MS = 30000;
+const CHAT_TIMEOUT_MS = 45000;
 
 const NVIDIA_MODELS = {
-  DEEPSEEK_V4_PRO: 'deepseek-ai/deepseek-v4-pro',
-  GLM_5_2: 'z-ai/glm-5.2',
-  DEEPSEEK_V4: 'deepseek-ai/deepseek-v4-flash',
-  KIMI_K2: 'moonshotai/kimi-k2.6',
   MINIMAX_M3: 'minimaxai/minimax-m3',
+  DEEPSEEK_V4: 'deepseek-ai/deepseek-v4-flash',
+  GLM_5_2: 'z-ai/glm-5.2',
+  DEEPSEEK_V4_PRO: 'deepseek-ai/deepseek-v4-pro',
 } as const;
+
+// 判断是否为DeepSeek模型（需要特殊处理reasoning_content）
+function isDeepSeekModel(model: string): boolean {
+  return model.startsWith('deepseek-ai/');
+}
 
 // 候选模型列表（按优先级排列，主模型失败自动降级到备选）
 const SERVER_MODEL_FALLBACK = [
-  NVIDIA_MODELS.DEEPSEEK_V4_PRO,
-  NVIDIA_MODELS.KIMI_K2,
   NVIDIA_MODELS.DEEPSEEK_V4,
-  NVIDIA_MODELS.GLM_5_2,
   NVIDIA_MODELS.MINIMAX_M3,
+  NVIDIA_MODELS.GLM_5_2,
+  NVIDIA_MODELS.DEEPSEEK_V4_PRO,
 ];
 
 // 调用NVIDIA API（支持多模型自动降级）
@@ -92,9 +96,23 @@ async function callNVIDIA(
 ): Promise<string | null> {
   for (const model of SERVER_MODEL_FALLBACK) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
 
     try {
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: false,
+        top_p: 0.95,
+      };
+
+      // DeepSeek模型：关闭thinking模式
+      if (isDeepSeekModel(model)) {
+        requestBody.chat_template_kwargs = { thinking: false };
+      }
+
       const response = await fetch(NVIDIA_API_URL, {
         method: 'POST',
         headers: {
@@ -102,14 +120,7 @@ async function callNVIDIA(
           Authorization: `Bearer ${NVIDIA_API_KEY}`,
           Accept: 'application/json',
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          stream: false,
-          top_p: 0.95,
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
@@ -121,10 +132,20 @@ async function callNVIDIA(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      const message = data.choices?.[0]?.message;
+
+      // 只取content字段（正式回答）
+      const content = message?.content;
       if (content) {
         return content;
       }
+
+      // 如果只有reasoning_content没有content，跳过此模型
+      if (message?.reasoning_content) {
+        console.warn(`NVIDIA API [${model}] only has reasoning_content, skipping...`);
+        continue;
+      }
+
       console.warn(`NVIDIA API [${model}] returned empty content`);
     } catch (err) {
       console.warn(`NVIDIA API [${model}] exception:`, err);
