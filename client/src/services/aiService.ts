@@ -1,5 +1,5 @@
 import { Avatar, AvatarAttributes, Career, Status, Scenario, Choice, GameEvent, CharacterPair, EmotionType } from '../types';
-// 使用NVIDIA多模型API（MiniMax-M3 / DeepSeek-V4-Flash / GLM-5.2 / DeepSeek-V4-Pro），支持自动降级
+// 使用智谱AI GLM-4.5-Flash模型
 import { callGLM } from './streamService';
 
 // ==========================================
